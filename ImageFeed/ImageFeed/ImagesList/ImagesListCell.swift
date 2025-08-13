@@ -20,7 +20,7 @@ final class ImagesListCell: UITableViewCell {
         super.awakeFromNib()
         
         // Закругляем углы у ячейки
-        contentView.layer.cornerRadius = 16
+        cellImageView.layer.cornerRadius = 16
         contentView.layer.masksToBounds = true
         // Прозрачный фон ячейки
         backgroundColor = .clear
@@ -35,10 +35,10 @@ final class ImagesListCell: UITableViewCell {
         cellImageView.translatesAutoresizingMaskIntoConstraints = false
         // Констрейны для ImageView
         NSLayoutConstraint.activate([
-            cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            cellImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor,constant: 16),
+            cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            cellImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4)
         ])
         
         // Настройка текста
@@ -66,10 +66,10 @@ final class ImagesListCell: UITableViewCell {
         likeButton.translatesAutoresizingMaskIntoConstraints = false
         // Констрейны для likeButton
         NSLayoutConstraint.activate([
-                likeButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),       // отступ сверху
-                likeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0), // отступ справа
-                likeButton.widthAnchor.constraint(equalToConstant: 44),  // ширина кнопки
-                likeButton.heightAnchor.constraint(equalToConstant: 44)  // высота кнопки
+                likeButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
+                likeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+                likeButton.widthAnchor.constraint(equalToConstant: 44),
+                likeButton.heightAnchor.constraint(equalToConstant: 44)
             ])
     }
     

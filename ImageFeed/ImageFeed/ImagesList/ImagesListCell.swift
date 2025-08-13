@@ -18,9 +18,7 @@ final class ImagesListCell: UITableViewCell {
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        
-        // Закругляем углы у ячейки
-        cellImageView.layer.cornerRadius = 16
+
         contentView.layer.masksToBounds = true
         // Прозрачный фон ячейки
         backgroundColor = .clear
@@ -30,6 +28,7 @@ final class ImagesListCell: UITableViewCell {
         // Настраиваем внешний вид ImageView
         cellImageView.contentMode = .scaleAspectFill
         cellImageView.clipsToBounds = true
+        cellImageView.layer.cornerRadius = 16
         
         // Отключение констрейнов у ImageView
         cellImageView.translatesAutoresizingMaskIntoConstraints = false

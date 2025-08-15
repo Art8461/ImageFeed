@@ -12,8 +12,9 @@ class TabBarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupTabBarIcons()
+        setupNavigationAppearance()
     }
-    
+    // MARK: TAPBAR
     private func setupTabBarIcons() {
         guard let items = tabBar.items else { return }
         
@@ -44,7 +45,25 @@ class TabBarController: UITabBarController {
         let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
-            
+
             tabBar.standardAppearance = appearance
     }
+    
+    // MARK: NAVIGATION
+    private func setupNavigationAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground() // убирает прозрачность
+        appearance.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0) // тёмный фон
+        appearance.titleTextAttributes = [
+            .foregroundColor: UIColor.white, // цвет заголовка
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+        ]
+        
+        // Цвет кнопок (back, done и т.д.)
+        UINavigationBar.appearance().tintColor = .white
+
+        // Применяем для всех состояний
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        }
 }

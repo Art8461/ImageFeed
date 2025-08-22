@@ -6,10 +6,12 @@
       "scale" : "1x"
     },
     {
+      "filename" : "ProfileTapBarActive@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "ProfileTapBarActive@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

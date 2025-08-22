@@ -83,8 +83,8 @@ final class ImagesListCell: UITableViewCell {
     private func setupGradient() {
         let gradient = CAGradientLayer()
         gradient.colors = [
-            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0).cgColor, // низ — сплошной
-            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 0.0).cgColor  // верх — прозрачный
+            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0).cgColor, // низ
+            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 0.0).cgColor  // верх
         ]
         gradient.startPoint = CGPoint(x: 0.5, y: 1.0) // снизу
         gradient.endPoint = CGPoint(x: 0.5, y: 0.0)   // вверх

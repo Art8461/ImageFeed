@@ -75,6 +75,7 @@ final class ImagesListViewController: UIViewController {
             
             let image = UIImage(named: photosName[indexPath.row])
             viewController.image = image
+            viewController.modalPresentationStyle = .fullScreen
         } else {
             super.prepare(for: segue, sender: sender)
         }

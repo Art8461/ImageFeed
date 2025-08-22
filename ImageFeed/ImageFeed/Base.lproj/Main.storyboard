@@ -71,7 +71,7 @@
                     <navigationItem key="navigationItem" id="Xpp-cN-559"/>
                     <connections>
                         <outlet property="tableView" destination="Evo-4P-TQh" id="ugI-iI-Ptl"/>
-                        <segue destination="abg-XO-TDs" kind="show" identifier="ShowSingleImage" id="cHZ-Gd-eUL"/>
+                        <segue destination="abg-XO-TDs" kind="presentation" identifier="ShowSingleImage" id="cHZ-Gd-eUL"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -83,20 +83,49 @@
             <objects>
                 <viewController storyboardIdentifier="SingleImageViewController" title="SingleImageViewController" interactionActivityTrackingBaseName="SingleImageViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="abg-XO-TDs" customClass="SingleImageViewController" customModule="ImageFeed" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="2xQ-BX-xyW">
-                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="783"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mg5-Hq-0Ji">
-                                <rect key="frame" x="76" y="362" width="240" height="128"/>
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" restorationIdentifier="scrollZoom" translatesAutoresizingMaskIntoConstraints="NO" id="isL-tP-tfV" userLabel="Scroll Zoom">
+                                <rect key="frame" x="76" y="226" width="240" height="128"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            </imageView>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mg5-Hq-0Ji">
+                                        <rect key="frame" x="0.0" y="0.0" width="240" height="128"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    </imageView>
+                                </subviews>
+                                <viewLayoutGuide key="contentLayoutGuide" id="chn-s7-vbN"/>
+                                <viewLayoutGuide key="frameLayoutGuide" id="666-iK-l8k"/>
+                            </scrollView>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="d2y-Sf-slq">
+                                <rect key="frame" x="16" y="59" width="75" height="35"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Button"/>
+                                <connections>
+                                    <action selector="didTapBackButton" destination="abg-XO-TDs" eventType="touchUpInside" id="FtG-m8-y6L"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="r4d-hs-BMo">
+                                <rect key="frame" x="165" y="679" width="75" height="35"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="Button"/>
+                                <connections>
+                                    <action selector="didTapShareButton:" destination="abg-XO-TDs" eventType="touchUpInside" id="bE0-AN-PYr"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="2TF-Ux-9kS"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
                     <navigationItem key="navigationItem" id="aXU-IA-yJm"/>
                     <connections>
+                        <outlet property="exitSinglImage" destination="d2y-Sf-slq" id="yDR-gI-rH2"/>
                         <outlet property="imageView" destination="mg5-Hq-0Ji" id="O2x-8a-Fh4"/>
+                        <outlet property="scrollZoom" destination="isL-tP-tfV" id="9Bq-b6-4kc"/>
+                        <outlet property="shareButton" destination="r4d-hs-BMo" id="ko9-dy-sz5"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="lhs-X9-5HD" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>

@@ -59,10 +59,8 @@ class TabBarController: UITabBarController {
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
         ]
         
-        // Цвет кнопок (back, done и т.д.)
         UINavigationBar.appearance().tintColor = .white
 
-        // Применяем для всех состояний
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
         }

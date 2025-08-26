@@ -13,7 +13,7 @@ final class ProfileViewController: UIViewController {
     private let photoProfile: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
-        imageView.image = UIImage(systemName: "person.crop.circle.fill")
+        imageView.image = UIImage(named: "avatar")
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 35
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -23,7 +23,7 @@ final class ProfileViewController: UIViewController {
     private let userName: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = UIFont(name: "SFProText-Bold", size: 23)
+        label.font = UIFont.systemFont(ofSize: 23, weight: .bold)
         label.text = "Имя пользователя"
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -32,7 +32,7 @@ final class ProfileViewController: UIViewController {
     private let userNickName: UILabel = {
         let label = UILabel()
         label.textColor = .gray
-        label.font = UIFont(name: "SFProText-Regular", size: 13)
+        label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         label.text = "@nickname"
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -41,7 +41,7 @@ final class ProfileViewController: UIViewController {
     private let descriptionProfile: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = UIFont(name: "SFProText-Regular", size: 13)
+        label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         label.numberOfLines = 0
         label.text = "Описание профиля"
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -51,7 +51,7 @@ final class ProfileViewController: UIViewController {
     private let exitButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "ipad.and.arrow.forward"), for: .normal)
-        button.tintColor = .systemRed
+        button.tintColor = UIColor(red: 245/255, green: 107/255, blue: 108/255, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()

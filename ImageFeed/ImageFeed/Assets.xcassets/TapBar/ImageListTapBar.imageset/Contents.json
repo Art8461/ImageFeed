@@ -1,15 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Vector.png",
+      "filename" : "ImageListTapBar.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "ImageListTapBar@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "ImageListTapBar@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

@@ -9,6 +9,8 @@ import UIKit
 
 final class ImagesListViewController: UIViewController {
     
+    private let showSingleImageSegueIdentifier = "ShowSingleImage"
+
     // MARK: - Публичные переменные
     
     // MARK: - IBOutlet
@@ -32,6 +34,7 @@ final class ImagesListViewController: UIViewController {
         super.viewDidLoad()
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         
         tableView.separatorStyle = .none // Разделительные линии убраны
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
@@ -44,7 +47,7 @@ final class ImagesListViewController: UIViewController {
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
     
@@ -60,6 +63,23 @@ final class ImagesListViewController: UIViewController {
         cell.configure(with: image, text: text, isLiked: isLiked)
     }
     
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == showSingleImageSegueIdentifier {
+            guard
+                let viewController = segue.destination as? SingleImageViewController,
+                let indexPath = sender as? IndexPath
+            else {
+                print("Invalid segue destination")
+                return
+            }
+            
+            let image = UIImage(named: photosName[indexPath.row])
+            viewController.image = image
+            viewController.modalPresentationStyle = .fullScreen
+        } else {
+            super.prepare(for: segue, sender: sender)
+        }
+    }
     
     // MARK: - IBAction
     // (Пока пусто — добавить при необходимости)
@@ -85,7 +105,7 @@ extension ImagesListViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // Реализация по необходимости
+        performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

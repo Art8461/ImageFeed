@@ -12,7 +12,7 @@ protocol AuthViewControllerDelegate: AnyObject {
 }
 
 final class AuthViewController: UIViewController {
-    private let showWebViewSegueIdentifier = "ShowWebView"
+    private let segueShowWebView = "ShowWebView"
     
     weak var delegate: AuthViewControllerDelegate?
     
@@ -24,7 +24,7 @@ final class AuthViewController: UIViewController {
         iv.translatesAutoresizingMaskIntoConstraints = false
         return iv
     }()
-
+    
     let enter: UIButton = {
         let btn = UIButton(type: .system)
         btn.setTitle("Войти", for: .normal)
@@ -39,6 +39,11 @@ final class AuthViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupUI()
+        setupConstraints()
+    }
+    
+    private func setupUI() {
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         print("🔹 AuthViewController loaded")
         
@@ -47,8 +52,9 @@ final class AuthViewController: UIViewController {
         view.addSubview(authLogo)
         view.addSubview(enter)
         enter.addTarget(self, action: #selector(enterButtonTapped), for: .touchUpInside)
-        
-        // Констрейнты
+    }
+    // Констрейнты
+    private func setupConstraints() {
         NSLayoutConstraint.activate([
             authLogo.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             authLogo.centerYAnchor.constraint(equalTo: view.centerYAnchor),
@@ -63,18 +69,21 @@ final class AuthViewController: UIViewController {
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showWebViewSegueIdentifier {
-            guard
-                let webViewViewController = segue.destination as? WebViewViewController
-            else {
-                assertionFailure("❌ Failed to prepare for \(showWebViewSegueIdentifier)")
-                return
-            }
-            print("ℹ️ Подготовка WebViewViewController через segue")
-            webViewViewController.delegate = self
-        } else {
+        switch segue.identifier {
+        case segueShowWebView:
+            prepareWebViewController(for: segue)
+        default:
             super.prepare(for: segue, sender: sender)
         }
+    }
+    
+    private func prepareWebViewController(for segue: UIStoryboardSegue) {
+        guard let webVC = segue.destination as? WebViewViewController else {
+            assertionFailure("❌ Неверный destination для \(segueShowWebView)")
+            return
+        }
+        print("ℹ️ Подготовка WebViewViewController через segue")
+        webVC.delegate = self
     }
     
     private func configureBackButton() {
@@ -100,7 +109,7 @@ extension AuthViewController: WebViewViewControllerDelegate {
         print("✅ Пользователь успешно авторизовался в WebView")
         self.delegate?.didAuthenticate(self)
     }
-
+    
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
         print("⚠️ Пользователь отменил авторизацию в WebView")
         vc.dismiss(animated: true)

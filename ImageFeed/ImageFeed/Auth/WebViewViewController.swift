@@ -14,7 +14,7 @@ protocol WebViewViewControllerDelegate: AnyObject {
 }
 
 final class WebViewViewController: UIViewController {
-
+    
     private let webView = WKWebView()
     private let progressView: UIProgressView = {
         let pv = UIProgressView(progressViewStyle: .default)
@@ -23,8 +23,9 @@ final class WebViewViewController: UIViewController {
         pv.translatesAutoresizingMaskIntoConstraints = false
         return pv
     }()
+    
     weak var delegate: WebViewViewControllerDelegate?
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         print("🔹 WebViewViewController загружен")
@@ -36,7 +37,7 @@ final class WebViewViewController: UIViewController {
     deinit {
         webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
     }
-
+    
     // MARK: - UI Setup
     private func setupViews() {
         view.addSubview(webView)
@@ -67,7 +68,7 @@ final class WebViewViewController: UIViewController {
     private func setupObservers() {
         webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
     }
-
+    
     override func observeValue(
         forKeyPath keyPath: String?,
         of object: Any?,
@@ -80,7 +81,7 @@ final class WebViewViewController: UIViewController {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
     }
-
+    
     private func updateProgress() {
         let progress = Float(webView.estimatedProgress)
         progressView.progress = progress
@@ -125,35 +126,48 @@ final class WebViewViewController: UIViewController {
 
 // MARK: - WKNavigationDelegate
 extension WebViewViewController: WKNavigationDelegate {
-
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        
-        if let url = navigationAction.request.url {
-            print("🔹 Навигация на URL: \(url.absoluteString)")
+    
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        guard let url = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
         }
-
-        if let url = navigationAction.request.url,
-           let code = extractCode(from: url) {
-            
-            print("✅ Найден код авторизации: \(code)")
-            
-            OAuth2Service.shared.fetchOAuthToken(code) { result in
-                switch result {
-                case .success(let token):
-                    print("✅ OAuth токен получен: \(token)")
-                    OAuth2TokenStorage.shared.token = token
-                    DispatchQueue.main.async {
-                        self.delegate?.webViewViewControllerDidAuthenticate(self)
-                    }
-                case .failure(let error):
-                    print("❌ Ошибка при получении OAuth токена: \(error)")
-                }
-            }
-            decisionHandler(.cancel)
+        
+        print("🔹 Навигация на URL: \(url.absoluteString)")
+        
+        // Проверяем, есть ли код авторизации
+        if let code = extractCode(from: url) {
+            handleAuthCode(code, decisionHandler: decisionHandler)
             return
         }
         
         decisionHandler(.allow)
+    }
+    
+    // MARK: - Private helpers
+    private func handleAuthCode(
+        _ code: String,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        print("✅ Найден код авторизации: \(code)")
+        
+        OAuth2Service.shared.fetchOAuthToken(code) { [weak self] result in
+            switch result {
+            case .success(let token):
+                print("✅ OAuth токен получен: \(token)")
+                OAuth2TokenStorage.shared.token = token
+                DispatchQueue.main.async {
+                    self?.delegate?.webViewViewControllerDidAuthenticate(self!)
+                }
+            case .failure(let error):
+                print("❌ Ошибка при получении OAuth токена: \(error)")
+            }
+        }
+        
+        decisionHandler(.cancel)
     }
 }

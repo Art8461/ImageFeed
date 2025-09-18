@@ -9,8 +9,8 @@
 import UIKit
 
 final class SplashViewController: UIViewController {
+
     private let storage = OAuth2TokenStorage.shared
-    private let showAuthenticationScreenSegueIdentifier = "ShowAuthenticationScreen"
     private var hasSwitchedToTabBar = false // защита от повторного перехода
 
     override func viewDidAppear(_ animated: Bool) {
@@ -20,7 +20,7 @@ final class SplashViewController: UIViewController {
         if let token = storage.token, !token.isEmpty {
             switchToTabBarController()
         } else {
-            performSegue(withIdentifier: showAuthenticationScreenSegueIdentifier, sender: nil)
+            showAuthController()
         }
     }
 
@@ -34,26 +34,28 @@ final class SplashViewController: UIViewController {
             return
         }
 
-        let tabBarController = UIStoryboard(name: "Main", bundle: .main)
-            .instantiateViewController(withIdentifier: "TabBarController")
-
+        let tabBarController = TabBarController()
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
         print("✅ TabBarController установлен как rootViewController")
     }
 
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showAuthenticationScreenSegueIdentifier,
-           let nav = segue.destination as? UINavigationController,
-           let authVC = nav.viewControllers.first as? AuthViewController {
-            authVC.delegate = self
-            print("ℹ️ AuthViewController подготовлен и делегат установлен")
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
+    private func showAuthController() {
+        // Создаём AuthViewController через код
+        let authVC = AuthViewController()
+        authVC.delegate = self
+
+        // Оборачиваем в UINavigationController, чтобы был NavigationBar
+        let nav = UINavigationController(rootViewController: authVC)
+        nav.modalPresentationStyle = .fullScreen
+
+        // Показываем модально
+        present(nav, animated: true)
+        print("ℹ️ Открыт AuthViewController через код")
     }
 }
 
+// MARK: - AuthViewControllerDelegate
 extension SplashViewController: AuthViewControllerDelegate {
     func didAuthenticate(_ vc: AuthViewController) {
         print("🔔 Авторизация завершена из AuthViewController")

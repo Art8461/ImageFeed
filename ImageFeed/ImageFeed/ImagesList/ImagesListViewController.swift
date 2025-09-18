@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  ImagesListViewController.swift
 //  ImageFeed
 //
 //  Created by Artem Kuzmenko on 12.08.2025.
@@ -9,12 +9,16 @@ import UIKit
 
 final class ImagesListViewController: UIViewController {
     
-    private let showSingleImageSegueIdentifier = "ShowSingleImage"
-
-    // MARK: - Публичные переменные
     
-    // MARK: - IBOutlet
-    @IBOutlet weak var tableView: UITableView!
+    // MARK: - UI
+    private let tableView: UITableView = {
+        let tv = UITableView()
+        tv.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
+        tv.separatorStyle = .none
+        tv.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
+        tv.translatesAutoresizingMaskIntoConstraints = false
+        return tv
+    }()
     
     
     // MARK: - Приватные переменные
@@ -32,57 +36,45 @@ final class ImagesListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
-        
-        tableView.separatorStyle = .none // Разделительные линии убраны
-        tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
-        
-        // Отключение констрейнов
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Констрейны таблицы
-        NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
-        ])
+        view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
+        setupTableView()
     }
-    
+    // MARK: - Настройка таблицы
+        private func setupTableView() {
+            view.addSubview(tableView)
+            
+            // Констрейнты
+            NSLayoutConstraint.activate([
+                tableView.topAnchor.constraint(equalTo: view.topAnchor),
+                tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            ])
+            
+            tableView.delegate = self
+            tableView.dataSource = self
+            
+            // Регистрация ячейки
+            tableView.register(ImagesListCell.self, forCellReuseIdentifier: ImagesListCell.reuseIdentifier)
+        }
     
     // MARK: - Приватные методы
+    // MARK: - Настройка ячейки
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         let imageName = photosName[indexPath.row]
         let image = UIImage(named: imageName)
         let text = dateFormatter.string(from: Date())
-        
-        // Лайк включён для чётных индексов, выключен для нечётных
         let isLiked = indexPath.row % 2 == 0
         cell.configure(with: image, text: text, isLiked: isLiked)
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showSingleImageSegueIdentifier {
-            guard
-                let viewController = segue.destination as? SingleImageViewController,
-                let indexPath = sender as? IndexPath
-            else {
-                print("Invalid segue destination")
-                return
-            }
-            
-            let image = UIImage(named: photosName[indexPath.row])
-            viewController.image = image
-            viewController.modalPresentationStyle = .fullScreen
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
+    // MARK: - Навигация
+    private func showSingleImage(for indexPath: IndexPath) {
+        let singleVC = SingleImageViewController()
+        singleVC.image = UIImage(named: photosName[indexPath.row])
+        singleVC.modalPresentationStyle = .fullScreen
+        navigationController?.pushViewController(singleVC, animated: true)
     }
-    
-    // MARK: - IBAction
-    // (Пока пусто — добавить при необходимости)
 }
 
 // MARK: - UITableViewDataSource, UITableViewDelegate
@@ -105,7 +97,8 @@ extension ImagesListViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
+        showSingleImage(for: indexPath)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

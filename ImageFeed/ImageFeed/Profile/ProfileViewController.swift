@@ -111,14 +111,14 @@ final class ProfileViewController: UIViewController {
         // 1️⃣ Очистка токена
         OAuth2TokenStorage.shared.token = nil
         print("🔹 Пользователь вышел — токен удалён")
-
+        
         // 2️⃣ Переключение на SplashViewController или Auth экран
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else { return }
-
-        let storyboard = UIStoryboard(name: "Main", bundle: .main)
-        let splashVC = storyboard.instantiateViewController(withIdentifier: "SplashViewController")
-        window.rootViewController = splashVC
+        
+        let authVC = AuthViewController()
+        let nav = UINavigationController(rootViewController: authVC)
+        window.rootViewController = nav
         window.makeKeyAndVisible()
     }
 }

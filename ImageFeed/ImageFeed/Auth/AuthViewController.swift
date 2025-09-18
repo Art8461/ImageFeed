@@ -47,6 +47,8 @@ final class AuthViewController: UIViewController {
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         print("🔹 AuthViewController loaded")
         
+        configureBackButton()
+        
         view.addSubview(authLogo)
         view.addSubview(enter)
         enter.addTarget(self, action: #selector(enterButtonTapped), for: .touchUpInside)
@@ -82,6 +84,14 @@ final class AuthViewController: UIViewController {
         }
         print("ℹ️ Подготовка WebViewViewController через segue")
         webVC.delegate = self
+    }
+    
+    private func configureBackButton() {
+        navigationController?.navigationBar.tintColor = UIColor(named: "ypBlack")
+        navigationController?.navigationBar.backIndicatorImage = UIImage(named: "BackwardBlack")
+        navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage(named: "BackwardBlack")
+        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+        print("ℹ️ Back button настроен")
     }
     
     // MARK: - Кнопка "Войти"

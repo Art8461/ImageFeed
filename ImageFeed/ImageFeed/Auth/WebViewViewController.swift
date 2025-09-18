@@ -30,6 +30,7 @@ final class WebViewViewController: UIViewController {
         super.viewDidLoad()
         print("🔹 WebViewViewController загружен")
         setupViews()
+        configureBackButton()
         loadAuthPage()
         setupObservers()
     }
@@ -63,6 +64,22 @@ final class WebViewViewController: UIViewController {
         progressView.tintColor = .systemBlue
         print("ℹ️ WKWebView и прогрессбар добавлены, делегат назначен")
     }
+    
+    private func configureBackButton() {
+            navigationController?.navigationBar.tintColor = UIColor(named: "ypBlack")
+            navigationController?.navigationBar.backIndicatorImage = UIImage(named: "BackwardBlack")
+            navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage(named: "BackwardBlack")
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                image: UIImage(named: "BackwardBlack"),
+                style: .plain,
+                target: self,
+                action: #selector(backButtonTapped)
+            )
+        }
+    
+    @objc private func backButtonTapped() {
+            navigationController?.popViewController(animated: true)
+        }
     
     // MARK: - KVO
     private func setupObservers() {

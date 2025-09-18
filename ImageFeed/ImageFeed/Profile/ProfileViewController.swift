@@ -108,6 +108,17 @@ final class ProfileViewController: UIViewController {
     }
     // MARK: - Действия
     @objc private func exitButtonTapped() {
-        dismiss(animated: true)
+        // 1️⃣ Очистка токена
+        OAuth2TokenStorage.shared.token = nil
+        print("🔹 Пользователь вышел — токен удалён")
+
+        // 2️⃣ Переключение на SplashViewController или Auth экран
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return }
+
+        let storyboard = UIStoryboard(name: "Main", bundle: .main)
+        let splashVC = storyboard.instantiateViewController(withIdentifier: "SplashViewController")
+        window.rootViewController = splashVC
+        window.makeKeyAndVisible()
     }
 }

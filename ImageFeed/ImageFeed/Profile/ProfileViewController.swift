@@ -70,9 +70,19 @@ final class ProfileViewController: UIViewController {
             name: .didUpdateProfile,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didUpdateProfileImage(_:)),
+            name: .didUpdateProfileImage,
+            object: nil
+        )
+        
         if let profile = ProfileService.shared.profile {
-            updateProfileUI(profile: profile)
-        }
+                    updateProfileUI(profile: profile)
+                }
+                if let avatar = ProfileImageService.shared.avatarURL {
+                    updateAvatar(urlString: avatar)
+                }
     }
     //скрываем навигейшн
     override func viewWillAppear(_ animated: Bool) {
@@ -127,6 +137,23 @@ final class ProfileViewController: UIViewController {
         guard let profile = notification.object as? ProfileService.Profile else { return }
         updateProfileUI(profile: profile)
     }
+    
+    @objc private func didUpdateProfileImage(_ notification: Notification) {
+            guard let urlString = notification.object as? String else { return }
+            updateAvatar(urlString: urlString)
+        }
+    
+    private func updateAvatar(urlString: String) {
+            guard let url = URL(string: urlString) else { return }
+            DispatchQueue.global().async {
+                if let data = try? Data(contentsOf: url) {
+                    let image = UIImage(data: data)
+                    DispatchQueue.main.async {
+                        self.photoProfile.image = image
+                    }
+                }
+            }
+        }
     
     private func updateProfileUI(profile: ProfileService.Profile) {
         userName.text = profile.name

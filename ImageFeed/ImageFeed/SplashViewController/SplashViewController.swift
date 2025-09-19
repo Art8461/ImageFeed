@@ -49,7 +49,9 @@ final class SplashViewController: UIViewController {
                     UIBlockingProgressHUD.dismiss()
                     
                     switch result {
-                    case .success(_):
+                    case .success(let profile):
+                        ProfileImageService.shared.fetchProfileImageURL(username: profile.username) { _ in
+                        }
                         // профиль обновляется в ProfileService.shared.profile внутри fetchProfile
                         self?.switchToTabBarController() // только после загрузки
                     case .failure(let error):

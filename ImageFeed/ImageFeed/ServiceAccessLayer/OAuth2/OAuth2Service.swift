@@ -18,20 +18,20 @@ final class OAuth2Service {
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
         queue.async(flags: .barrier) {
             
-            // a) Если запрос с этим кодом уже выполняется — подписываем новый completion
+            // a)
             if self.currentCode == code {
                 print("⚠️ Запрос с кодом \(code) уже выполняется, добавляем completion")
                 self.currentCompletions.append(completion)
                 return
             }
 
-            // b) Новый код — сбрасываем старые задачи и запускаем новый запрос
+            // b)
             self.currentCode = code
             self.currentCompletions = [completion]
             print("➡️ Старт fetchOAuthToken для кода: \(code)")
 
             self.performNetworkCall(code: code) { result in
-                // c) Обработка результата: вызываем все completion
+                // c)
                 self.queue.async(flags: .barrier) {
                     let completions = self.currentCompletions
                     self.currentCompletions = []

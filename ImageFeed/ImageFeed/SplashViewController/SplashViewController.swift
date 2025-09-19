@@ -46,11 +46,11 @@ final class SplashViewController: UIViewController {
         authVC.delegate = self
 
         // Оборачиваем в UINavigationController, чтобы был NavigationBar
-        let nav = UINavigationController(rootViewController: authVC)
-        nav.modalPresentationStyle = .fullScreen
+        let navVC = UINavigationController(rootViewController: authVC)
+        navVC.modalPresentationStyle = .fullScreen
 
         // Показываем модально
-        present(nav, animated: true)
+        present(navVC, animated: true)
         print("ℹ️ Открыт AuthViewController через код")
     }
 }

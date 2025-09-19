@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import WebKit
 
 final class ProfileViewController: UIViewController {
     
@@ -62,6 +63,7 @@ final class ProfileViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
+        fetchProfile()
     }
     //скрываем навигейшн
     override func viewWillAppear(_ animated: Bool) {
@@ -111,19 +113,50 @@ final class ProfileViewController: UIViewController {
             exitButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
+    
+    private func fetchProfile() {
+            guard let token = OAuth2TokenStorage.shared.token else {
+                print("❌ No token found")
+                return
+            }
+            
+            ProfileService.shared.fetchProfile(token) { [weak self] result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let profile):
+                        self?.userName.text = profile.name
+                        self?.userNickName.text = profile.loginName
+                        self?.descriptionProfile.text = profile.bio
+                    case .failure(let error):
+                        print("❌ Failed to fetch profile: \(error)")
+                    }
+                }
+            }
+        }
+    
     // MARK: - Действия
     @objc private func exitButtonTapped() {
         // 1️⃣ Очистка токена
         OAuth2TokenStorage.shared.token = nil
         print("🔹 Пользователь вышел — токен удалён")
         
+        // 2️⃣ Очистка cookies и данных WebView
+        HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+            records.forEach { record in
+                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record]) {
+                    print("🗑 Удалены данные для: \(record.displayName)")
+                }
+            }
+        }
+        
         // 2️⃣ Переключение на SplashViewController или Auth экран
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else { return }
         
-        let authVC = AuthViewController()
-        let nav = UINavigationController(rootViewController: authVC)
-        window.rootViewController = nav
+        let splashVC = SplashViewController()
+        let navVC = UINavigationController(rootViewController: splashVC)
+        window.rootViewController = navVC
         window.makeKeyAndVisible()
     }
 }

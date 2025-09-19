@@ -63,7 +63,16 @@ final class ProfileViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        fetchProfile()
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didUpdateProfile(_:)),
+            name: .didUpdateProfile,
+            object: nil
+        )
+        if let profile = ProfileService.shared.profile {
+            updateProfileUI(profile: profile)
+        }
     }
     //скрываем навигейшн
     override func viewWillAppear(_ animated: Bool) {
@@ -114,25 +123,16 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    private func fetchProfile() {
-            guard let token = OAuth2TokenStorage.shared.token else {
-                print("❌ No token found")
-                return
-            }
-            
-            ProfileService.shared.fetchProfile(token) { [weak self] result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success(let profile):
-                        self?.userName.text = profile.name
-                        self?.userNickName.text = profile.loginName
-                        self?.descriptionProfile.text = profile.bio
-                    case .failure(let error):
-                        print("❌ Failed to fetch profile: \(error)")
-                    }
-                }
-            }
-        }
+    @objc private func didUpdateProfile(_ notification: Notification) {
+        guard let profile = notification.object as? ProfileService.Profile else { return }
+        updateProfileUI(profile: profile)
+    }
+    
+    private func updateProfileUI(profile: ProfileService.Profile) {
+        userName.text = profile.name
+        userNickName.text = profile.loginName
+        descriptionProfile.text = profile.bio
+    }
     
     // MARK: - Действия
     @objc private func exitButtonTapped() {
@@ -149,8 +149,7 @@ final class ProfileViewController: UIViewController {
                 }
             }
         }
-        
-        // 2️⃣ Переключение на SplashViewController или Auth экран
+        // 2️⃣ Переключение на SplashViewController
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else { return }
         
@@ -158,5 +157,8 @@ final class ProfileViewController: UIViewController {
         let navVC = UINavigationController(rootViewController: splashVC)
         window.rootViewController = navVC
         window.makeKeyAndVisible()
+    }
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }

@@ -14,6 +14,11 @@ final class ProfileService {
     
     private init() {}
     
+    private(set) var profile: Profile?{
+        didSet {
+            NotificationCenter.default.post(name: .didUpdateProfile, object: profile)
+        }
+    }
     // MARK: - Модель для декодирования ответа от Unsplash
     struct ProfileResult: Codable {
         let username: String
@@ -56,7 +61,8 @@ final class ProfileService {
     // MARK: - Метод для получения профиля
     func fetchProfile(_ token: String, completion: @escaping (Result<Profile, Error>) -> Void) {
         guard let request = makeRequest(token: token) else {
-            completion(.failure(NSError(domain: "ProfileService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            completion(.failure(NSError(domain: "ProfileService", code: 0,
+                                        userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
             return
         }
         
@@ -68,7 +74,8 @@ final class ProfileService {
             }
             
             guard let data = data else {
-                let error = NSError(domain: "ProfileService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])
+                let error = NSError(domain: "ProfileService", code: 0,
+                                    userInfo: [NSLocalizedDescriptionKey: "No data received"])
                 print("❌ ProfileService error: No data")
                 completion(.failure(error))
                 return
@@ -77,6 +84,7 @@ final class ProfileService {
             do {
                 let result = try JSONDecoder().decode(ProfileResult.self, from: data)
                 let profile = Profile(from: result)
+                self.profile = profile
                 completion(.success(profile))
             } catch {
                 print("❌ ProfileService decode error: \(error)")
@@ -85,4 +93,7 @@ final class ProfileService {
         }
         task.resume()
     }
+}
+extension Notification.Name {
+    static let didUpdateProfile = Notification.Name("didUpdateProfile")
 }

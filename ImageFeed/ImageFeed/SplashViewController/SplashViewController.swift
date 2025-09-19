@@ -9,7 +9,8 @@
 import UIKit
 
 final class SplashViewController: UIViewController {
-
+    
+    private let profileService = ProfileService.shared
     private let storage = OAuth2TokenStorage.shared
     private var hasSwitchedToTabBar = false // защита от повторного перехода
 
@@ -18,7 +19,7 @@ final class SplashViewController: UIViewController {
         print("🔹 SplashViewController появился. Токен =", storage.token ?? "nil")
 
         if let token = storage.token, !token.isEmpty {
-            switchToTabBarController()
+            fetchProfile(token: token)
         } else {
             showAuthController()
         }
@@ -39,7 +40,25 @@ final class SplashViewController: UIViewController {
         window.makeKeyAndVisible()
         print("✅ TabBarController установлен как rootViewController")
     }
-
+    
+    private func fetchProfile(token: String) {
+        UIBlockingProgressHUD.show()
+        
+        profileService.fetchProfile(token) { [weak self] result in
+                DispatchQueue.main.async {
+                    UIBlockingProgressHUD.dismiss()
+                    
+                    switch result {
+                    case .success(_):
+                        // профиль обновляется в ProfileService.shared.profile внутри fetchProfile
+                        self?.switchToTabBarController() // только после загрузки
+                    case .failure(let error):
+                        print("❌ Ошибка загрузки профиля: \(error)")
+                    }
+                }
+            }
+        }
+    
     private func showAuthController() {
         // Создаём AuthViewController через код
         let authVC = AuthViewController()
@@ -60,7 +79,8 @@ extension SplashViewController: AuthViewControllerDelegate {
     func didAuthenticate(_ vc: AuthViewController) {
         print("🔔 Авторизация завершена из AuthViewController")
         vc.dismiss(animated: true) { [weak self] in
-            self?.switchToTabBarController()
+            guard let token = self?.storage.token else { return }
+            self?.fetchProfile(token: token)
         }
     }
 }

@@ -180,8 +180,13 @@ extension WebViewViewController: WKNavigationDelegate {
         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
     ) {
         print("✅ Найден код авторизации: \(code)")
+        
+        UIBlockingProgressHUD.show()
 
         OAuth2Service.shared.fetchOAuthToken(code) { [weak self] result in
+            
+            UIBlockingProgressHUD.dismiss()
+
             switch result {
             case .success(let token):
                 print("✅ OAuth токен получен: \(token)")

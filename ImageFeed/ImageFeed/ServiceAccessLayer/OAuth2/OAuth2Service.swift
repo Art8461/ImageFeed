@@ -11,18 +11,53 @@ final class OAuth2Service {
     static let shared = OAuth2Service()
     private init() {}
 
+    private var currentCode: String?
+    private var currentCompletions: [(Result<String, Error>) -> Void] = []
+    private let queue = DispatchQueue(label: "OAuth2Service.Queue", attributes: .concurrent)
+
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
+        queue.async(flags: .barrier) {
+            
+            // a) Если запрос с этим кодом уже выполняется — подписываем новый completion
+            if self.currentCode == code {
+                print("⚠️ Запрос с кодом \(code) уже выполняется, добавляем completion")
+                self.currentCompletions.append(completion)
+                return
+            }
+
+            // b) Новый код — сбрасываем старые задачи и запускаем новый запрос
+            self.currentCode = code
+            self.currentCompletions = [completion]
+            print("➡️ Старт fetchOAuthToken для кода: \(code)")
+
+            self.performNetworkCall(code: code) { result in
+                // c) Обработка результата: вызываем все completion
+                self.queue.async(flags: .barrier) {
+                    let completions = self.currentCompletions
+                    self.currentCompletions = []
+                    self.currentCode = nil
+
+                    DispatchQueue.main.async {
+                        completions.forEach { $0(result) }
+                    }
+                }
+            }
+        }
+    }
+
+    // Сетевой вызов к Unsplash
+    private func performNetworkCall(code: String, completion: @escaping (Result<String, Error>) -> Void) {
         guard let url = URL(string: "https://unsplash.com/oauth/token") else {
-            print("❌ Ошибка: неверный URL для запроса токена")
-            completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            DispatchQueue.main.async {
+                completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            }
             return
         }
-        print("➡️ Формируем POST-запрос для получения токена")
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        
+
         let bodyComponents = [
             "client_id=\(Constants.accessKey)",
             "client_secret=\(Constants.secretKey)",
@@ -30,46 +65,26 @@ final class OAuth2Service {
             "code=\(code)",
             "grant_type=authorization_code"
         ]
-        let bodyString = bodyComponents.joined(separator: "&")
-        request.httpBody = bodyString.data(using: .utf8)
-        print("ℹ️ Тело запроса: \(bodyString)")
-        
+        request.httpBody = bodyComponents.joined(separator: "&").data(using: .utf8)
+
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("❌ Сетевая ошибка: \(error)")
-                DispatchQueue.main.async { completion(.failure(error)) }
-                return
-            }
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Ошибка: нет HTTP-ответа")
-                DispatchQueue.main.async { completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "No HTTP response"]))) }
-                return
-            }
-            
-            print("ℹ️ HTTP статус код:", httpResponse.statusCode)
-            
-            guard let data = data else {
-                print("❌ Ошибка: нет данных в ответе")
-                DispatchQueue.main.async {
-                    completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data"])))
-                }
+                completion(.failure(error))
                 return
             }
 
-            print("📩 Ответ Unsplash: \(String(data: data, encoding: .utf8) ?? "nil")")
-            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data"])))
+                return
+            }
+
             do {
                 let tokenResponse = try JSONDecoder().decode(OAuthTokenResponseBody.self, from: data)
                 let accessToken = tokenResponse.accessToken
                 OAuth2TokenStorage.shared.token = accessToken
-                print("✅ Токен успешно получен:", accessToken)
-                DispatchQueue.main.async { completion(.success(accessToken)) }
+                completion(.success(accessToken))
             } catch {
-                print("❌ Ошибка при декодировании токена:", error)
-                DispatchQueue.main.async {
-                    completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "Token parsing failed: \(error)"])))
-                }
+                completion(.failure(error))
             }
         }
         task.resume()

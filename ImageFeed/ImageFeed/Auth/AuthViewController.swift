@@ -67,6 +67,10 @@ final class AuthViewController: UIViewController {
     
     // MARK: - Кнопка "Войти"
     @objc private func enterButtonTapped() {
+        guard UIApplication.shared.windows.first?.isUserInteractionEnabled == true else {
+            print("⚠️ WebView пока заблокирован, повторное открытие невозможно")
+            return
+        }
         print("➡️ Нажата кнопка Войти")
         let webVC = WebViewViewController()
         webVC.delegate = self

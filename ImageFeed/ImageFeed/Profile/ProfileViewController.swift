@@ -63,6 +63,11 @@ final class ProfileViewController: UIViewController {
         setupUI()
         setupConstraints()
     }
+    //скрываем навигейшн
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
     
     // MARK: - Настройка интерфейса
     private func setupUI() {

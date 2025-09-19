@@ -22,6 +22,8 @@ class SingleImageViewController: UIViewController {
             sv.minimumZoomScale = 0.1
             sv.maximumZoomScale = 1.25
             sv.translatesAutoresizingMaskIntoConstraints = false
+            sv.showsVerticalScrollIndicator = false
+            sv.showsHorizontalScrollIndicator = false
             return sv
         }()
 
@@ -74,10 +76,10 @@ class SingleImageViewController: UIViewController {
     private func setupConstraints() {
            NSLayoutConstraint.activate([
         // ScrollZoom
-            scrollZoom.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollZoom.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            scrollZoom.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            scrollZoom.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            scrollZoom.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollZoom.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollZoom.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollZoom.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
         // Image
             imageView.topAnchor.constraint(equalTo: scrollZoom.contentLayoutGuide.topAnchor),
@@ -103,7 +105,7 @@ class SingleImageViewController: UIViewController {
     
     // MARK: - Actions
     @objc private func didTapBackButton() {
-        dismiss(animated: true)
+        navigationController?.popViewController(animated: true)
     }
     
     @objc private func didTapShareButton() {

@@ -12,7 +12,6 @@ protocol AuthViewControllerDelegate: AnyObject {
 }
 
 final class AuthViewController: UIViewController {
-    private let segueShowWebView = "ShowWebView"
     
     weak var delegate: AuthViewControllerDelegate?
     
@@ -46,9 +45,7 @@ final class AuthViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         print("🔹 AuthViewController loaded")
-        
-        configureBackButton()
-        
+                
         view.addSubview(authLogo)
         view.addSubview(enter)
         enter.addTarget(self, action: #selector(enterButtonTapped), for: .touchUpInside)
@@ -66,32 +63,6 @@ final class AuthViewController: UIViewController {
             enter.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -124),
             enter.heightAnchor.constraint(equalToConstant: 48)
         ])
-    }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        switch segue.identifier {
-        case segueShowWebView:
-            prepareWebViewController(for: segue)
-        default:
-            super.prepare(for: segue, sender: sender)
-        }
-    }
-    
-    private func prepareWebViewController(for segue: UIStoryboardSegue) {
-        guard let webVC = segue.destination as? WebViewViewController else {
-            assertionFailure("❌ Неверный destination для \(segueShowWebView)")
-            return
-        }
-        print("ℹ️ Подготовка WebViewViewController через segue")
-        webVC.delegate = self
-    }
-    
-    private func configureBackButton() {
-        navigationController?.navigationBar.tintColor = UIColor(named: "ypBlack")
-        navigationController?.navigationBar.backIndicatorImage = UIImage(named: "BackwardBlack")
-        navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage(named: "BackwardBlack")
-        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        print("ℹ️ Back button настроен")
     }
     
     // MARK: - Кнопка "Войти"

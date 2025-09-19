@@ -65,7 +65,7 @@ final class ImagesListCell: UITableViewCell {
     }
     private func setupUI() {
         contentView.addSubview(cellImageView)
-        cellImageView.addSubview(cellTextLabel)
+        contentView.addSubview(cellTextLabel)
         contentView.addSubview(likeButton)
         
         likeButton.addTarget(self, action: #selector(didTapLike), for: .touchUpInside)

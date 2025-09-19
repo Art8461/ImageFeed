@@ -39,6 +39,10 @@ final class ImagesListViewController: UIViewController {
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         setupTableView()
     }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
     // MARK: - Настройка таблицы
         private func setupTableView() {
             view.addSubview(tableView)
@@ -73,6 +77,7 @@ final class ImagesListViewController: UIViewController {
         let singleVC = SingleImageViewController()
         singleVC.image = UIImage(named: photosName[indexPath.row])
         singleVC.modalPresentationStyle = .fullScreen
+        singleVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(singleVC, animated: true)
     }
 }

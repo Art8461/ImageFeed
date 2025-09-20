@@ -61,33 +61,17 @@ final class ProfileService {
     // MARK: - Метод для получения профиля
     func fetchProfile(_ token: String, completion: @escaping (Result<Profile, Error>) -> Void) {
         guard let request = makeRequest(token: token) else {
-            completion(.failure(NSError(domain: "ProfileService", code: 0,
-                                        userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            completion(.failure(NetworkError.invalidRequest))
             return
         }
-        
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("❌ ProfileService error: \(error)")
-                completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
-                let error = NSError(domain: "ProfileService", code: 0,
-                                    userInfo: [NSLocalizedDescriptionKey: "No data received"])
-                print("❌ ProfileService error: No data")
-                completion(.failure(error))
-                return
-            }
-            
-            do {
-                let result = try JSONDecoder().decode(ProfileResult.self, from: data)
-                let profile = Profile(from: result)
+
+        let task = URLSession.shared.objectTask(for: request) { (result: Result<ProfileResult, Error>) in
+            switch result {
+            case .success(let profileResult):
+                let profile = Profile(from: profileResult)
                 self.profile = profile
                 completion(.success(profile))
-            } catch {
-                print("❌ ProfileService decode error: \(error)")
+            case .failure(let error):
                 completion(.failure(error))
             }
         }

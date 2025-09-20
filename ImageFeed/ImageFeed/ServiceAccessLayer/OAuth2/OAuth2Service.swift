@@ -48,9 +48,7 @@ final class OAuth2Service {
     // Сетевой вызов к Unsplash
     private func performNetworkCall(code: String, completion: @escaping (Result<String, Error>) -> Void) {
         guard let url = URL(string: "https://unsplash.com/oauth/token") else {
-            DispatchQueue.main.async {
-                completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
-            }
+            completion(.failure(NetworkError.invalidRequest))
             return
         }
 
@@ -67,23 +65,13 @@ final class OAuth2Service {
         ]
         request.httpBody = bodyComponents.joined(separator: "&").data(using: .utf8)
 
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-
-            guard let data = data else {
-                completion(.failure(NSError(domain: "OAuth2", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data"])))
-                return
-            }
-
-            do {
-                let tokenResponse = try JSONDecoder().decode(OAuthTokenResponseBody.self, from: data)
+        let task = URLSession.shared.objectTask(for: request) { (result: Result<OAuthTokenResponseBody, Error>) in
+            switch result {
+            case .success(let tokenResponse):
                 let accessToken = tokenResponse.accessToken
                 OAuth2TokenStorage.shared.token = accessToken
                 completion(.success(accessToken))
-            } catch {
+            case .failure(let error):
                 completion(.failure(error))
             }
         }

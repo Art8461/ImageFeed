@@ -24,31 +24,20 @@ final class ProfileImageService {
 
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
         guard let token = OAuth2TokenStorage.shared.token else { return }
-
-        task?.cancel() // отменяем предыдущий запрос
+        task?.cancel()
         guard let url = URL(string: "https://api.unsplash.com/users/\(username)") else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
-        task = URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-
-            guard let data = data else {
-                completion(.failure(NSError(domain: "ProfileImageService", code: 0, userInfo: nil)))
-                return
-            }
-
-            do {
-                let result = try JSONDecoder().decode(UserResult.self, from: data)
-                let avatar = result.profileImage.small
+        task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<UserResult, Error>) in
+            switch result {
+            case .success(let userResult):
+                let avatar = userResult.profileImage.small
                 self?.avatarURL = avatar
                 completion(.success(avatar))
-            } catch {
+            case .failure(let error):
                 completion(.failure(error))
             }
         }

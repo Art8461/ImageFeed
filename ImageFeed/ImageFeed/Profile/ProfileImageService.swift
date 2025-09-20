@@ -23,7 +23,7 @@ final class ProfileImageService {
     private var task: URLSessionTask?
 
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
-        guard let token = OAuth2TokenStorage.shared.token else { return }
+        guard let token = OAuth2TokenKeychainStorage.shared.token else { return }
         task?.cancel()
         guard let url = URL(string: "https://api.unsplash.com/users/\(username)") else { return }
 

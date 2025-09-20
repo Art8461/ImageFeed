@@ -175,7 +175,7 @@ extension WebViewViewController: WKNavigationDelegate {
             switch result {
             case .success(let token):
                 print("✅ OAuth токен получен: \(token)")
-                OAuth2TokenStorage.shared.token = token
+                OAuth2TokenKeychainStorage.shared.token = token
                 self.delegate?.webViewViewControllerDidAuthenticate(self)
             case .failure(let error):
                 print("❌ Ошибка при получении OAuth токена: \(error)")

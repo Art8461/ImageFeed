@@ -171,7 +171,7 @@ final class ProfileViewController: UIViewController {
     
     // MARK: - Действия
     @objc private func exitButtonTapped() {
-        OAuth2TokenStorage.shared.token = nil
+        OAuth2TokenKeychainStorage.shared.token = nil
         print("🔹 Пользователь вышел — токен удалён")
         
         HTTPCookieStorage.shared.removeCookies(since: .distantPast)

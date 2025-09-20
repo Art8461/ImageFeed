@@ -11,7 +11,7 @@ import UIKit
 final class SplashViewController: UIViewController {
     
     private let profileService = ProfileService.shared
-    private let storage = OAuth2TokenStorage.shared
+    private let storage = OAuth2TokenKeychainStorage.shared
     private var hasSwitchedToTabBar = false // защита от повторного перехода
 
     override func viewDidAppear(_ animated: Bool) {

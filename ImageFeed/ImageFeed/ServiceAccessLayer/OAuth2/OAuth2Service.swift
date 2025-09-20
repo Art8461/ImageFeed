@@ -69,7 +69,7 @@ final class OAuth2Service {
             switch result {
             case .success(let tokenResponse):
                 let accessToken = tokenResponse.accessToken
-                OAuth2TokenStorage.shared.token = accessToken
+                OAuth2TokenKeychainStorage.shared.token = accessToken
                 completion(.success(accessToken))
             case .failure(let error):
                 print("[OAuth2Service]: fetchOAuthToken Error - \(error.localizedDescription), код: \(code)")

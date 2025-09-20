@@ -46,7 +46,24 @@ final class WebViewViewController: UIViewController {
         setupObservers()
         loadAuthPage()
     }
-
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if #available(iOS 13, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithTransparentBackground() // прозрачный фон
+            appearance.backgroundColor = .clear
+            appearance.shadowColor = .clear // убираем линию-тень
+            
+            navigationController?.navigationBar.standardAppearance = appearance
+            navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        } else {
+            navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            navigationController?.navigationBar.shadowImage = UIImage()
+            navigationController?.navigationBar.isTranslucent = true
+        }
+    }
     // MARK: - Setup Views
     private func setupViews() {
         view.addSubview(webView)

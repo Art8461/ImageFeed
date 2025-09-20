@@ -170,25 +170,38 @@ final class ProfileViewController: UIViewController {
     }
     
     // MARK: - Действия
+
     @objc private func exitButtonTapped() {
-        OAuth2TokenKeychainStorage.shared.token = nil
-        print("🔹 Пользователь вышел — токен удалён")
-        
-        HTTPCookieStorage.shared.removeCookies(since: .distantPast)
-        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record]) {
-                    print("🗑 Удалены данные для: \(record.displayName)")
+        let alert = CustomExitAlert()
+        alert.modalPresentationStyle = .overFullScreen
+        alert.modalTransitionStyle = .crossDissolve
+        alert.onConfirmExit = { [weak self] in
+            guard self != nil else { return }
+            
+            // 1️⃣ Очистка токена
+            OAuth2TokenKeychainStorage.shared.token = nil
+            print("🔹 Пользователь вышел — токен удалён")
+            
+            // 2️⃣ Очистка cookies и данных WKWebView
+            HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+            WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+                records.forEach { record in
+                    WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record]) {
+                        print("🗑 Удалены данные для: \(record.displayName)")
+                    }
                 }
             }
+            
+            // 3️⃣ Переход на SplashViewController
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let window = windowScene.windows.first else { return }
+            
+            let splashVC = SplashViewController()
+            let navVC = UINavigationController(rootViewController: splashVC)
+            window.rootViewController = navVC
+            window.makeKeyAndVisible()
         }
         
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else { return }
-        
-        let splashVC = SplashViewController()
-        let navVC = UINavigationController(rootViewController: splashVC)
-        window.rootViewController = navVC
-        window.makeKeyAndVisible()
+        present(alert, animated: true)
     }
 }

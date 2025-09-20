@@ -11,18 +11,30 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
+    // MARK: - Запуск сцены
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = (scene as? UIWindowScene) else { return }
 
+        let window = UIWindow(windowScene: windowScene)
+        self.window = window
+
+        let splashVC = SplashViewController()
+        let navVC = UINavigationController(rootViewController: splashVC) // <-- вот тут
+        window.rootViewController = navVC
+        window.makeKeyAndVisible()
+    }
+
+    // MARK: - Обработка редиректа OAuth
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         guard let url = URLContexts.first?.url else { return }
-        
+
         // Проверяем, что это редирект с Unsplash
         if url.scheme == "imagefeed", let code = extractCode(from: url) {
-            // Передаем код в OAuth2Service
             OAuth2Service.shared.fetchOAuthToken(code) { result in
                 switch result {
                 case .success(let token):
                     print("✅ OAuth токен получен: \(token)")
-                    // Можно отправить уведомление, чтобы SplashViewController обновился
+                    // Уведомляем, что пользователь авторизовался
                     NotificationCenter.default.post(name: .didAuthenticate, object: nil)
                 case .failure(let error):
                     print("❌ Ошибка OAuth: \(error)")
@@ -36,37 +48,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         return components?.queryItems?.first(where: { $0.name == "code" })?.value
     }
 
-    func sceneDidDisconnect(_ scene: UIScene) {
-        // Called as the scene is being released by the system.
-        // This occurs shortly after the scene enters the background, or when its session is discarded.
-        // Release any resources associated with this scene that can be re-created the next time the scene connects.
-        // The scene may re-connect later, as its session was not necessarily discarded (see `application:didDiscardSceneSessions` instead).
-    }
-
-    func sceneDidBecomeActive(_ scene: UIScene) {
-        // Called when the scene has moved from an inactive state to an active state.
-        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
-    }
-
-    func sceneWillResignActive(_ scene: UIScene) {
-        // Called when the scene will move from an active state to an inactive state.
-        // This may occur due to temporary interruptions (ex. an incoming phone call).
-    }
-
-    func sceneWillEnterForeground(_ scene: UIScene) {
-        // Called as the scene transitions from the background to the foreground.
-        // Use this method to undo the changes made on entering the background.
-    }
-
-    func sceneDidEnterBackground(_ scene: UIScene) {
-        // Called as the scene transitions from the foreground to the background.
-        // Use this method to save data, release shared resources, and store enough scene-specific state information
-        // to restore the scene back to its current state.
-    }
-
-
+    // MARK: - Стандартные методы UISceneDelegate
+    func sceneDidDisconnect(_ scene: UIScene) {}
+    func sceneDidBecomeActive(_ scene: UIScene) {}
+    func sceneWillResignActive(_ scene: UIScene) {}
+    func sceneWillEnterForeground(_ scene: UIScene) {}
+    func sceneDidEnterBackground(_ scene: UIScene) {}
 }
 
+// MARK: - Уведомление о логине
 extension Notification.Name {
     static let didAuthenticate = Notification.Name("didAuthenticate")
 }

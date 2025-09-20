@@ -12,7 +12,6 @@ protocol AuthViewControllerDelegate: AnyObject {
 }
 
 final class AuthViewController: UIViewController {
-    private let segueShowWebView = "ShowWebView"
     
     weak var delegate: AuthViewControllerDelegate?
     
@@ -47,8 +46,6 @@ final class AuthViewController: UIViewController {
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         print("🔹 AuthViewController loaded")
         
-        configureBackButton()
-        
         view.addSubview(authLogo)
         view.addSubview(enter)
         enter.addTarget(self, action: #selector(enterButtonTapped), for: .touchUpInside)
@@ -68,39 +65,29 @@ final class AuthViewController: UIViewController {
         ])
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        switch segue.identifier {
-        case segueShowWebView:
-            prepareWebViewController(for: segue)
-        default:
-            super.prepare(for: segue, sender: sender)
-        }
-    }
-    
-    private func prepareWebViewController(for segue: UIStoryboardSegue) {
-        guard let webVC = segue.destination as? WebViewViewController else {
-            assertionFailure("❌ Неверный destination для \(segueShowWebView)")
-            return
-        }
-        print("ℹ️ Подготовка WebViewViewController через segue")
-        webVC.delegate = self
-    }
-    
-    private func configureBackButton() {
-        navigationController?.navigationBar.tintColor = UIColor(named: "ypBlack")
-        navigationController?.navigationBar.backIndicatorImage = UIImage(named: "BackwardBlack")
-        navigationController?.navigationBar.backIndicatorTransitionMaskImage = UIImage(named: "BackwardBlack")
-        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        print("ℹ️ Back button настроен")
-    }
-    
     // MARK: - Кнопка "Войти"
     @objc private func enterButtonTapped() {
+        guard UIApplication.shared.windows.first?.isUserInteractionEnabled == true else {
+            print("⚠️ WebView пока заблокирован, повторное открытие невозможно")
+            return
+        }
         print("➡️ Нажата кнопка Войти")
         let webVC = WebViewViewController()
         webVC.delegate = self
         self.navigationController?.pushViewController(webVC, animated: true)
         print("➡️ Открыт WebViewViewController")
+    }
+    // MARK: - Показать алерт при ошибке входа
+    func showLoginErrorAlert() {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default))
+        DispatchQueue.main.async {
+            self.present(alert, animated: true)
+        }
     }
 }
 
@@ -113,5 +100,9 @@ extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
         print("⚠️ Пользователь отменил авторизацию в WebView")
         vc.dismiss(animated: true)
+    }
+    func webViewViewController(_ vc: WebViewViewController, didFailWithError error: Error) {
+        print("❌ Ошибка авторизации: \(error.localizedDescription)")
+        showLoginErrorAlert()
     }
 }

@@ -9,101 +9,80 @@
 import UIKit
 
 final class SplashViewController: UIViewController {
-    private let showAuthenticationScreenSegueIdentifier = "ShowAuthenticationScreen"
-    private let storage = OAuth2TokenStorage.shared
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        print("🔹 SplashViewController загружен")
-
-        // Подписка на уведомление о завершении авторизации
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didAuthenticateNotification),
-            name: .didAuthenticate,
-            object: nil
-        )
-        print("ℹ️ Подписка на уведомление didAuthenticate установлена")
-    }
-
-    @objc private func didAuthenticateNotification() {
-        print("🔔 Получено уведомление о завершении авторизации")
-        if storage.token != nil {
-            print("✅ Пользователь авторизован через кастомный редирект. Токен =", storage.token!)
-            switchToTabBarController()
-        } else {
-            print("⚠️ Токен отсутствует при уведомлении")
-        }
-    }
+    
+    private let profileService = ProfileService.shared
+    private let storage = OAuth2TokenKeychainStorage.shared
+    private var hasSwitchedToTabBar = false // защита от повторного перехода
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        print("🔹 SplashViewController появился. Текущий токен =", storage.token ?? "nil")
+        print("🔹 SplashViewController появился. Токен =", storage.token ?? "nil")
 
-        if storage.token != nil {
-            print("✅ Токен найден, переключаюсь на TabBar")
-            switchToTabBarController()
+        if let token = storage.token, !token.isEmpty {
+            fetchProfile(token: token)
         } else {
-            print("ℹ️ Токен не найден, открываю экран авторизации")
-            performSegue(withIdentifier: showAuthenticationScreenSegueIdentifier, sender: nil)
+            showAuthController()
         }
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setNeedsStatusBarAppearanceUpdate()
-    }
-
-    override var preferredStatusBarStyle: UIStatusBarStyle {
-        .lightContent
-    }
-
     private func switchToTabBarController() {
+        guard !hasSwitchedToTabBar else { return } // предотвращаем двойной вызов
+        hasSwitchedToTabBar = true
+
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else {
             assertionFailure("❌ Не удалось получить активное окно")
             return
         }
 
-        print("➡️ Переключение на TabBarController")
-        let tabBarController = UIStoryboard(name: "Main", bundle: .main)
-            .instantiateViewController(withIdentifier: "TabBarController")
-
+        let tabBarController = TabBarController()
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
         print("✅ TabBarController установлен как rootViewController")
     }
-}
-
-extension SplashViewController {
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showAuthenticationScreenSegueIdentifier {
-            guard
-                let navigationController = segue.destination as? UINavigationController,
-                let viewController = navigationController.viewControllers.first as? AuthViewController
-            else {
-                assertionFailure("❌ Ошибка при подготовке AuthViewController")
-                return
+    
+    private func fetchProfile(token: String) {
+        UIBlockingProgressHUD.show()
+        
+        profileService.fetchProfile(token) { [weak self] result in
+                DispatchQueue.main.async {
+                    UIBlockingProgressHUD.dismiss()
+                    
+                    switch result {
+                    case .success(let profile):
+                        ProfileImageService.shared.fetchProfileImageURL(username: profile.username) { _ in
+                        }
+                        // профиль обновляется в ProfileService.shared.profile внутри fetchProfile
+                        self?.switchToTabBarController() // только после загрузки
+                    case .failure(let error):
+                        print("❌ Ошибка загрузки профиля: \(error)")
+                    }
+                }
             }
-            viewController.delegate = self
-            print("ℹ️ AuthViewController подготовлен и делегат установлен")
-        } else {
-            super.prepare(for: segue, sender: sender)
         }
+    
+    private func showAuthController() {
+        // Создаём AuthViewController через код
+        let authVC = AuthViewController()
+        authVC.delegate = self
+
+        // Оборачиваем в UINavigationController, чтобы был NavigationBar
+        let navVC = UINavigationController(rootViewController: authVC)
+        navVC.modalPresentationStyle = .fullScreen
+
+        // Показываем модально
+        present(navVC, animated: true)
+        print("ℹ️ Открыт AuthViewController через код")
     }
 }
 
+// MARK: - AuthViewControllerDelegate
 extension SplashViewController: AuthViewControllerDelegate {
     func didAuthenticate(_ vc: AuthViewController) {
-        print("🔔 didAuthenticate вызван из AuthViewController")
+        print("🔔 Авторизация завершена из AuthViewController")
         vc.dismiss(animated: true) { [weak self] in
-            guard let self = self else { return }
-            if self.storage.token != nil {
-                print("✅ Авторизация успешна, переключаюсь на TabBar. Токен =", self.storage.token!)
-                self.switchToTabBarController()
-            } else {
-                print("⚠️ Токен ещё не успел сохраниться")
-            }
+            guard let token = self?.storage.token else { return }
+            self?.fetchProfile(token: token)
         }
     }
 }

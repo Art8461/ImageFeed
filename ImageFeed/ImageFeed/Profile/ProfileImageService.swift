@@ -38,6 +38,7 @@ final class ProfileImageService {
                 self?.avatarURL = avatar
                 completion(.success(avatar))
             case .failure(let error):
+                print("[ProfileImageService]: fetchProfileImageURL Error - \(error.localizedDescription), username: \(username)")
                 completion(.failure(error))
             }
         }

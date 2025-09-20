@@ -12,6 +12,7 @@ import WebKit
 protocol WebViewViewControllerDelegate: AnyObject {
     func webViewViewControllerDidAuthenticate(_ vc: WebViewViewController)
     func webViewViewControllerDidCancel(_ vc: WebViewViewController)
+    func webViewViewController(_ vc: WebViewViewController, didFailWithError error: Error)
 }
 
 // MARK: - Main Class
@@ -169,18 +170,16 @@ extension WebViewViewController: WKNavigationDelegate {
         OAuth2Service.shared.fetchOAuthToken(code) { [weak self] result in
             
             UIBlockingProgressHUD.dismiss()
+            guard let self = self else { return }
 
             switch result {
             case .success(let token):
                 print("✅ OAuth токен получен: \(token)")
                 OAuth2TokenStorage.shared.token = token
-                DispatchQueue.main.async {
-                    if let self = self {
-                        self.delegate?.webViewViewControllerDidAuthenticate(self)
-                    }
-                }
+                self.delegate?.webViewViewControllerDidAuthenticate(self)
             case .failure(let error):
                 print("❌ Ошибка при получении OAuth токена: \(error)")
+                self.delegate?.webViewViewController(self, didFailWithError: error)
             }
         }
 

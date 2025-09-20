@@ -72,6 +72,7 @@ final class OAuth2Service {
                 OAuth2TokenStorage.shared.token = accessToken
                 completion(.success(accessToken))
             case .failure(let error):
+                print("[OAuth2Service]: fetchOAuthToken Error - \(error.localizedDescription), код: \(code)")
                 completion(.failure(error))
             }
         }

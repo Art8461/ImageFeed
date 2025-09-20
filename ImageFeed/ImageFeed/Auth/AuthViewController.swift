@@ -45,7 +45,7 @@ final class AuthViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         print("🔹 AuthViewController loaded")
-                
+        
         view.addSubview(authLogo)
         view.addSubview(enter)
         enter.addTarget(self, action: #selector(enterButtonTapped), for: .touchUpInside)
@@ -77,6 +77,18 @@ final class AuthViewController: UIViewController {
         self.navigationController?.pushViewController(webVC, animated: true)
         print("➡️ Открыт WebViewViewController")
     }
+    // MARK: - Показать алерт при ошибке входа
+    func showLoginErrorAlert() {
+        let alert = UIAlertController(
+            title: "Что-то пошло не так",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default))
+        DispatchQueue.main.async {
+            self.present(alert, animated: true)
+        }
+    }
 }
 
 extension AuthViewController: WebViewViewControllerDelegate {
@@ -88,5 +100,9 @@ extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
         print("⚠️ Пользователь отменил авторизацию в WebView")
         vc.dismiss(animated: true)
+    }
+    func webViewViewController(_ vc: WebViewViewController, didFailWithError error: Error) {
+        print("❌ Ошибка авторизации: \(error.localizedDescription)")
+        showLoginErrorAlert()
     }
 }

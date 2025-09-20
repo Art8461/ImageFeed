@@ -24,11 +24,14 @@ extension URLSession {
                 if 200 ..< 300 ~= statusCode {
                     fulfillCompletionOnTheMainThread(.success(data))
                 } else {
+                    print("[dataTask]: HTTP Error - статус \(statusCode), URL: \(request.url?.absoluteString ?? "nil")")
                     fulfillCompletionOnTheMainThread(.failure(NetworkError.httpStatusCode(statusCode)))
                 }
             } else if let error = error {
+                print("[dataTask]: URLRequest Error - \(error.localizedDescription), URL: \(request.url?.absoluteString ?? "nil")")
                 fulfillCompletionOnTheMainThread(.failure(NetworkError.urlRequestError(error)))
             } else {
+                print("[dataTask]: URLSession Error - данные и ошибка nil, URL: \(request.url?.absoluteString ?? "nil")")
                 fulfillCompletionOnTheMainThread(.failure(NetworkError.urlSessionError))
             }
         })
@@ -43,7 +46,7 @@ extension URLSession {
         completion: @escaping (Result<T, Error>) -> Void
     ) -> URLSessionTask {
         let decoder = JSONDecoder()
-
+        
         let task = data(for: request) { (result: Result<Data, Error>) in
             switch result {
             case .success(let data):
@@ -54,16 +57,16 @@ extension URLSession {
                     let decodedObject = try decoder.decode(T.self, from: data)
                     completion(.success(decodedObject))
                 } catch {
-                    print("❌ Ошибка декодирования: \(error)")
+                    print("[objectTask]: Decoding Error - \(error.localizedDescription), Данные: \(String(data: data, encoding: .utf8) ?? "")")
                     completion(.failure(NetworkError.decodingError(error)))
                 }
-
+                
             case .failure(let error):
-                print("❌ Ошибка запроса: \(error.localizedDescription)")
+                print("[objectTask]: Network Error - \(error.localizedDescription), URL: \(request.url?.absoluteString ?? "nil")")
                 completion(.failure(error))
             }
         }
-
+        
         return task
     }
 }

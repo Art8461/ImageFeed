@@ -7,6 +7,7 @@
 
 import UIKit
 import WebKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
     
@@ -143,14 +144,23 @@ final class ProfileViewController: UIViewController {
     // MARK: - Обновления UI
     private func updateAvatar(urlString: String) {
         guard let url = URL(string: urlString) else { return }
-        DispatchQueue.global().async {
-            if let data = try? Data(contentsOf: url) {
-                let image = UIImage(data: data)
-                DispatchQueue.main.async {
-                    self.photoProfile.image = image
+        
+        photoProfile.kf.setImage(
+            with: url,
+            placeholder: UIImage(named: "avatar"), // картинка по умолчанию
+            options: [
+                .transition(.fade(0.3)), // плавное появление
+                .cacheOriginalImage       // кеширование
+            ],
+            completionHandler: { result in
+                switch result {
+                case .success(let value):
+                    print("✅ Аватар успешно загружен: \(value.source.url?.absoluteString ?? "")")
+                case .failure(let error):
+                    print("[ProfileViewController]: updateAvatar Error - \(error.localizedDescription), URL: \(urlString)")
                 }
             }
-        }
+        )
     }
     
     private func updateProfileUI(profile: ProfileService.Profile) {

@@ -34,6 +34,7 @@ final class WebViewViewController: UIViewController {
 
     // MARK: - Properties
     weak var delegate: WebViewViewControllerDelegate?
+    private var progressObservation: NSKeyValueObservation?
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -43,10 +44,6 @@ final class WebViewViewController: UIViewController {
         setupCustomBackButton()
         setupObservers()
         loadAuthPage()
-    }
-
-    deinit {
-        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
     }
 
     // MARK: - Setup Views
@@ -71,6 +68,7 @@ final class WebViewViewController: UIViewController {
         progressView.tintColor = .systemBlue
         print("ℹ️ WKWebView и прогрессбар добавлены, делегат назначен")
     }
+
     private func setupCustomBackButton() {
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(named: "BackwardBlack"),
@@ -84,26 +82,11 @@ final class WebViewViewController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
 
-    // MARK: - KVO
+    // MARK: - KVO (новое API)
     private func setupObservers() {
-        webView.addObserver(
-            self,
-            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-            options: .new,
-            context: nil
-        )
-    }
-
-    override func observeValue(
-        forKeyPath keyPath: String?,
-        of object: Any?,
-        change: [NSKeyValueChangeKey: Any]?,
-        context: UnsafeMutableRawPointer?
-    ) {
-        if keyPath == #keyPath(WKWebView.estimatedProgress) {
-            updateProgress()
-        } else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+        progressObservation = webView.observe(\.estimatedProgress, options: [.new]) { [weak self] _, change in
+            guard let self = self else { return }
+            self.updateProgress()
         }
     }
 

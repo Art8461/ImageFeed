@@ -57,34 +57,47 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
+    // MARK: - Observers (новый API)
+    private var profileObserver: NSObjectProtocol?
+    private var profileImageObserver: NSObjectProtocol?
     
-    // MARK: - Публичные методы
+    // MARK: - Жизненный цикл
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
         
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didUpdateProfile(_:)),
-            name: .didUpdateProfile,
-            object: nil
-        )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didUpdateProfileImage(_:)),
-            name: .didUpdateProfileImage,
-            object: nil
-        )
+        // Подписка на обновление профиля
+        profileObserver = NotificationCenter.default.addObserver(
+            forName: .didUpdateProfile,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let profile = notification.object as? ProfileService.Profile else { return }
+            self.updateProfileUI(profile: profile)
+        }
         
+        // Подписка на обновление аватарки
+        profileImageObserver = NotificationCenter.default.addObserver(
+            forName: .didUpdateProfileImage,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let urlString = notification.object as? String else { return }
+            self.updateAvatar(urlString: urlString)
+        }
+        
+        // Если данные уже есть — обновляем сразу
         if let profile = ProfileService.shared.profile {
-                    updateProfileUI(profile: profile)
-                }
-                if let avatar = ProfileImageService.shared.avatarURL {
-                    updateAvatar(urlString: avatar)
-                }
+            updateProfileUI(profile: profile)
+        }
+        if let avatar = ProfileImageService.shared.avatarURL {
+            updateAvatar(urlString: avatar)
+        }
     }
-    //скрываем навигейшн
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
@@ -100,32 +113,26 @@ final class ProfileViewController: UIViewController {
         view.addSubview(exitButton)
         
         exitButton.addTarget(self, action: #selector(exitButtonTapped), for: .touchUpInside)
-        
     }
     
     // MARK: - Констрейнты
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // Фото профиля
             photoProfile.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
             photoProfile.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             photoProfile.widthAnchor.constraint(equalToConstant: 70),
             photoProfile.heightAnchor.constraint(equalToConstant: 70),
             
-            // Имя пользователя
             userName.topAnchor.constraint(equalTo: photoProfile.bottomAnchor, constant: 8),
             userName.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             
-            // Никнейм
             userNickName.topAnchor.constraint(equalTo: userName.bottomAnchor, constant: 8),
             userNickName.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             
-            // Описание профиля
             descriptionProfile.topAnchor.constraint(equalTo: userNickName.bottomAnchor, constant: 8),
             descriptionProfile.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             descriptionProfile.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
-            // Кнопка выхода
             exitButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 45),
             exitButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             exitButton.widthAnchor.constraint(equalToConstant: 44),
@@ -133,27 +140,18 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    @objc private func didUpdateProfile(_ notification: Notification) {
-        guard let profile = notification.object as? ProfileService.Profile else { return }
-        updateProfileUI(profile: profile)
-    }
-    
-    @objc private func didUpdateProfileImage(_ notification: Notification) {
-            guard let urlString = notification.object as? String else { return }
-            updateAvatar(urlString: urlString)
-        }
-    
+    // MARK: - Обновления UI
     private func updateAvatar(urlString: String) {
-            guard let url = URL(string: urlString) else { return }
-            DispatchQueue.global().async {
-                if let data = try? Data(contentsOf: url) {
-                    let image = UIImage(data: data)
-                    DispatchQueue.main.async {
-                        self.photoProfile.image = image
-                    }
+        guard let url = URL(string: urlString) else { return }
+        DispatchQueue.global().async {
+            if let data = try? Data(contentsOf: url) {
+                let image = UIImage(data: data)
+                DispatchQueue.main.async {
+                    self.photoProfile.image = image
                 }
             }
         }
+    }
     
     private func updateProfileUI(profile: ProfileService.Profile) {
         userName.text = profile.name
@@ -163,11 +161,9 @@ final class ProfileViewController: UIViewController {
     
     // MARK: - Действия
     @objc private func exitButtonTapped() {
-        // 1️⃣ Очистка токена
         OAuth2TokenStorage.shared.token = nil
         print("🔹 Пользователь вышел — токен удалён")
         
-        // 2️⃣ Очистка cookies и данных WebView
         HTTPCookieStorage.shared.removeCookies(since: .distantPast)
         WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
             records.forEach { record in
@@ -176,7 +172,7 @@ final class ProfileViewController: UIViewController {
                 }
             }
         }
-        // 2️⃣ Переключение на SplashViewController
+        
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else { return }
         
@@ -184,8 +180,5 @@ final class ProfileViewController: UIViewController {
         let navVC = UINavigationController(rootViewController: splashVC)
         window.rootViewController = navVC
         window.makeKeyAndVisible()
-    }
-    deinit {
-        NotificationCenter.default.removeObserver(self)
     }
 }

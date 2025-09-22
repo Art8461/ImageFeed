@@ -6,25 +6,25 @@
 //
 
 import Foundation
+import SwiftKeychainWrapper
 
-final class OAuth2TokenStorage {
+final class OAuth2TokenKeychainStorage {
 
-    static let shared = OAuth2TokenStorage()
-    
+    static let shared = OAuth2TokenKeychainStorage()
     private init() {}
 
-    private let tokenKey = "OAuth2Token"
-    private let defaults = UserDefaults.standard
+    private let key = "unsplash_access_token"
 
     var token: String? {
         get {
-            let value = defaults.string(forKey: tokenKey)
-            print("🔹 Читаю токен из UserDefaults:", value ?? "nil")
-            return value
+            KeychainWrapper.standard.string(forKey: key)
         }
         set {
-            defaults.set(newValue, forKey: tokenKey)
-            print("✅ Токен сохранён:", newValue ?? "nil")
+            if let value = newValue {
+                KeychainWrapper.standard.set(value, forKey: key)
+            } else {
+                KeychainWrapper.standard.removeObject(forKey: key)
+            }
         }
     }
 }

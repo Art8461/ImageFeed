@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import WebKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
     
@@ -56,12 +58,50 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
+    // MARK: - Observers (новый API)
+    private var profileObserver: NSObjectProtocol?
+    private var profileImageObserver: NSObjectProtocol?
     
-    // MARK: - Публичные методы
+    // MARK: - Жизненный цикл
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
+        
+        // Подписка на обновление профиля
+        profileObserver = NotificationCenter.default.addObserver(
+            forName: .didUpdateProfile,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let profile = notification.object as? ProfileService.Profile else { return }
+            self.updateProfileUI(profile: profile)
+        }
+        
+        // Подписка на обновление аватарки
+        profileImageObserver = NotificationCenter.default.addObserver(
+            forName: .didUpdateProfileImage,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let urlString = notification.object as? String else { return }
+            self.updateAvatar(urlString: urlString)
+        }
+        
+        // Если данные уже есть — обновляем сразу
+        if let profile = ProfileService.shared.profile {
+            updateProfileUI(profile: profile)
+        }
+        if let avatar = ProfileImageService.shared.avatarURL {
+            updateAvatar(urlString: avatar)
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
     }
     
     // MARK: - Настройка интерфейса
@@ -74,40 +114,94 @@ final class ProfileViewController: UIViewController {
         view.addSubview(exitButton)
         
         exitButton.addTarget(self, action: #selector(exitButtonTapped), for: .touchUpInside)
-        
     }
     
     // MARK: - Констрейнты
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // Фото профиля
             photoProfile.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
             photoProfile.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             photoProfile.widthAnchor.constraint(equalToConstant: 70),
             photoProfile.heightAnchor.constraint(equalToConstant: 70),
             
-            // Имя пользователя
             userName.topAnchor.constraint(equalTo: photoProfile.bottomAnchor, constant: 8),
             userName.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             
-            // Никнейм
             userNickName.topAnchor.constraint(equalTo: userName.bottomAnchor, constant: 8),
             userNickName.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             
-            // Описание профиля
             descriptionProfile.topAnchor.constraint(equalTo: userNickName.bottomAnchor, constant: 8),
             descriptionProfile.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             descriptionProfile.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
-            // Кнопка выхода
             exitButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 45),
             exitButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             exitButton.widthAnchor.constraint(equalToConstant: 44),
             exitButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
+    
+    // MARK: - Обновления UI
+    private func updateAvatar(urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        
+        photoProfile.kf.setImage(
+            with: url,
+            placeholder: UIImage(named: "avatar"), // картинка по умолчанию
+            options: [
+                .transition(.fade(0.3)), // плавное появление
+                .cacheOriginalImage       // кеширование
+            ],
+            completionHandler: { result in
+                switch result {
+                case .success(let value):
+                    print("✅ Аватар успешно загружен: \(value.source.url?.absoluteString ?? "")")
+                case .failure(let error):
+                    print("[ProfileViewController]: updateAvatar Error - \(error.localizedDescription), URL: \(urlString)")
+                }
+            }
+        )
+    }
+    
+    private func updateProfileUI(profile: ProfileService.Profile) {
+        userName.text = profile.name
+        userNickName.text = profile.loginName
+        descriptionProfile.text = profile.bio
+    }
+    
     // MARK: - Действия
+
     @objc private func exitButtonTapped() {
-        dismiss(animated: true)
+        let alert = CustomExitAlert()
+        alert.modalPresentationStyle = .overFullScreen
+        alert.modalTransitionStyle = .crossDissolve
+        alert.onConfirmExit = { [weak self] in
+            guard self != nil else { return }
+            
+            // 1️⃣ Очистка токена
+            OAuth2TokenKeychainStorage.shared.token = nil
+            print("🔹 Пользователь вышел — токен удалён")
+            
+            // 2️⃣ Очистка cookies и данных WKWebView
+            HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+            WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+                records.forEach { record in
+                    WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record]) {
+                        print("🗑 Удалены данные для: \(record.displayName)")
+                    }
+                }
+            }
+            
+            // 3️⃣ Переход на SplashViewController
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let window = windowScene.windows.first else { return }
+            
+            let splashVC = SplashViewController()
+            let navVC = UINavigationController(rootViewController: splashVC)
+            window.rootViewController = navVC
+            window.makeKeyAndVisible()
+        }
+        
+        present(alert, animated: true)
     }
 }

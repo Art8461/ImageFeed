@@ -16,86 +16,102 @@ class SingleImageViewController: UIViewController {
         }
     }
     
-    @IBOutlet weak var exitSinglImage: UIButton!
-    @IBOutlet weak var imageView: UIImageView!
-    @IBOutlet weak var scrollZoom: UIScrollView!
-    @IBOutlet weak var shareButton: UIButton!
+    // MARK: - UI
+        private let scrollZoom: UIScrollView = {
+            let sv = UIScrollView()
+            sv.minimumZoomScale = 0.1
+            sv.maximumZoomScale = 1.25
+            sv.translatesAutoresizingMaskIntoConstraints = false
+            sv.showsVerticalScrollIndicator = false
+            sv.showsHorizontalScrollIndicator = false
+            return sv
+        }()
+
+        private let imageView: UIImageView = {
+            let iv = UIImageView()
+            iv.contentMode = .scaleAspectFit
+            iv.translatesAutoresizingMaskIntoConstraints = false
+            return iv
+        }()
+
+        private let exitSinglImage: UIButton = {
+            let btn = UIButton(type: .system)
+            btn.setImage(UIImage(named: "Backward"), for: .normal)
+            btn.tintColor = .white
+            btn.translatesAutoresizingMaskIntoConstraints = false
+            return btn
+        }()
+
+        private let shareButton: UIButton = {
+            let btn = UIButton(type: .system)
+            btn.setImage(UIImage(named: "Sharing"), for: .normal)
+            btn.tintColor = .white
+            btn.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
+            btn.layer.cornerRadius = 25
+            btn.clipsToBounds = true
+            btn.translatesAutoresizingMaskIntoConstraints = false
+            return btn
+        }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        guard let image else { return }
-        imageView.image = image
-        
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         
-        // ScrollZoom
+        setupUI()
+        setupConstraints()
+        imageView.image = image
+    }
+    private func setupUI() {
+        view.addSubview(scrollZoom)
+        scrollZoom.addSubview(imageView)
+        view.addSubview(exitSinglImage)
+        view.addSubview(shareButton)
+        
         scrollZoom.delegate = self
-        scrollZoom.minimumZoomScale = 0.1
-        scrollZoom.maximumZoomScale = 1.25
         
-        scrollZoom.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            scrollZoom.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollZoom.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            scrollZoom.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            scrollZoom.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
-        ])
-        
+        exitSinglImage.addTarget(self, action: #selector(didTapBackButton), for: .touchUpInside)
+        shareButton.addTarget(self, action: #selector(didTapShareButton), for: .touchUpInside)
+    }
+    
+    private func setupConstraints() {
+           NSLayoutConstraint.activate([
+        // ScrollZoom
+            scrollZoom.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollZoom.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollZoom.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollZoom.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
         // Image
-        imageView.contentMode = .scaleAspectFit
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: scrollZoom.contentLayoutGuide.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: scrollZoom.contentLayoutGuide.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: scrollZoom.contentLayoutGuide.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: scrollZoom.contentLayoutGuide.bottomAnchor),
             imageView.widthAnchor.constraint(equalTo: scrollZoom.frameLayoutGuide.widthAnchor),
-            imageView.heightAnchor.constraint(equalTo: scrollZoom.frameLayoutGuide.heightAnchor)
-        ])
-        
+            imageView.heightAnchor.constraint(equalTo: scrollZoom.frameLayoutGuide.heightAnchor),
+            
         // Exit Button
-        exitSinglImage.setImage(UIImage(named: "Backward"), for: .normal)
-        exitSinglImage.tintColor = .white
-        exitSinglImage.setTitle("", for: .normal)
-        exitSinglImage.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
             exitSinglImage.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 11),
             exitSinglImage.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
             exitSinglImage.widthAnchor.constraint(equalToConstant: 24),
-            exitSinglImage.heightAnchor.constraint(equalToConstant: 24)
-        ])
-        
-        
+            exitSinglImage.heightAnchor.constraint(equalToConstant: 24),
+            
         // Share Button
-        shareButton.setImage(UIImage(named: "Sharing"), for: .normal)
-        shareButton.tintColor = .white
-        shareButton.setTitle("", for: .normal)
-        shareButton.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0) // или любой другой
-        shareButton.layer.cornerRadius = 25 // половина ширины/высоты для круга
-        shareButton.clipsToBounds = true
-        shareButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
             shareButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             shareButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -51),
             shareButton.widthAnchor.constraint(equalToConstant: 50),
             shareButton.heightAnchor.constraint(equalToConstant: 50)
         ])
-        view.bringSubviewToFront(shareButton)
-        view.bringSubviewToFront(exitSinglImage)
     }
     
-    @IBAction private func didTapBackButton() {
-        dismiss(animated: true, completion: nil)
+    // MARK: - Actions
+    @objc private func didTapBackButton() {
+        navigationController?.popViewController(animated: true)
     }
-    @IBAction func didTapShareButton(_ sender: UIButton) {
+    
+    @objc private func didTapShareButton() {
         guard let image else { return }
-        let share = UIActivityViewController(
-            activityItems: [image],
-            applicationActivities: nil
-        )
-        present(share, animated: true, completion: nil)
-        
+        let share = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        present(share, animated: true)
     }
 }
 
@@ -111,12 +127,8 @@ extension SingleImageViewController: UIScrollViewDelegate {
         let scrollViewSize = scrollZoom.bounds.size
         let imageSize = imageView.frame.size
         
-        let verticalInset = imageSize.height < scrollViewSize.height
-        ? (scrollViewSize.height - imageSize.height) / 2
-        : 0
-        let horizontalInset = imageSize.width < scrollViewSize.width
-        ? (scrollViewSize.width - imageSize.width) / 2
-        : 0
+        let verticalInset = imageSize.height < scrollViewSize.height ? (scrollViewSize.height - imageSize.height) / 2 : 0
+        let horizontalInset = imageSize.width < scrollViewSize.width ? (scrollViewSize.width - imageSize.width) / 2 : 0
         
         scrollZoom.contentInset = UIEdgeInsets(
             top: verticalInset,

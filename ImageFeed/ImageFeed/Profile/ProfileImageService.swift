@@ -23,25 +23,39 @@ final class ProfileImageService {
     private var task: URLSessionTask?
 
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
-        guard let token = OAuth2TokenKeychainStorage.shared.token else { return }
+        guard
+            let token = OAuth2TokenKeychainStorage.shared.token,
+            let url = URL(string: "https://api.unsplash.com/users/\(username)")
+        else {
+            completion(.failure(NetworkError.invalidRequest))
+            return
+        }
+
         task?.cancel()
-        guard let url = URL(string: "https://api.unsplash.com/users/\(username)") else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         task = URLSession.shared.objectTask(for: request) { [weak self] (result: Result<UserResult, Error>) in
+            guard let self else { return }
+
             switch result {
             case .success(let userResult):
                 let avatar = userResult.profileImage.small
-                self?.avatarURL = avatar
-                completion(.success(avatar))
+                DispatchQueue.main.async {
+                    self.avatarURL = avatar
+                    completion(.success(avatar))
+                }
+
             case .failure(let error):
                 print("[ProfileImageService]: fetchProfileImageURL Error - \(error.localizedDescription), username: \(username)")
-                completion(.failure(error))
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
             }
         }
+
         task?.resume()
     }
 

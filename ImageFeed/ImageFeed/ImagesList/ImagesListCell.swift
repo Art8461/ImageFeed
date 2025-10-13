@@ -33,8 +33,8 @@ final class ImagesListCell: UITableViewCell {
     
     private let likeButton: UIButton = {
         let btn = UIButton(type: .system)
-        btn.setImage(UIImage(named: "NoActive"), for: .normal)
-        btn.setImage(UIImage(named: "Active"), for: .selected)
+        btn.setImage(UIImage(named: "NoActive")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        btn.setImage(UIImage(named: "Active")?.withRenderingMode(.alwaysOriginal), for: .selected)
         btn.tintColor = .clear
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn

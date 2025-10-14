@@ -6,31 +6,43 @@
 //
 
 import Foundation
+import UIKit
 
-struct Photo {
+struct Photo: Decodable {
     let id: String
     let size: CGSize
     let createdAt: Date?
-    let welcomeDescription: String?
+    let description: String?
     let thumbImageURL: String
     let largeImageURL: String
-    let isLiked: Bool
-}
+    var isLiked: Bool
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, description, width, height, urls, liked_by_user, created_at
+    }
 
-extension Photo {
-    init(from result: PhotoResult) {
-        self.id = result.id
-        self.size = CGSize(width: result.width, height: result.height)
-        self.thumbImageURL = result.urls.thumb
-        self.largeImageURL = result.urls.full
-        self.isLiked = result.liked_by_user
-        self.welcomeDescription = result.description
-        
-        if let createdAtString = result.created_at {
+    private enum UrlsKeys: String, CodingKey {
+        case thumb, full
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+        let width = try container.decode(Int.self, forKey: .width)
+        let height = try container.decode(Int.self, forKey: .height)
+        size = CGSize(width: width, height: height)
+        isLiked = try container.decode(Bool.self, forKey: .liked_by_user)
+
+        let urlsContainer = try container.nestedContainer(keyedBy: UrlsKeys.self, forKey: .urls)
+        thumbImageURL = try urlsContainer.decode(String.self, forKey: .thumb)
+        largeImageURL = try urlsContainer.decode(String.self, forKey: .full)
+
+        if let createdAtString = try container.decodeIfPresent(String.self, forKey: .created_at) {
             let formatter = ISO8601DateFormatter()
-            self.createdAt = formatter.date(from: createdAtString)
+            createdAt = formatter.date(from: createdAtString)
         } else {
-            self.createdAt = nil
+            createdAt = nil
         }
     }
 }

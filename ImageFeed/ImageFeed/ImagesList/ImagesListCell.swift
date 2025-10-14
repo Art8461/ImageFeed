@@ -8,12 +8,16 @@
 import UIKit
 import Kingfisher
 
+protocol ImagesListCellDelegate: AnyObject {
+    func imageListCellDidTapLike(_ cell: ImagesListCell)
+}
+
 final class ImagesListCell: UITableViewCell {
     
-    // MARK: - Публичные переменные
     static let reuseIdentifier = "ImagesListCell"
     
-    // MARK: - UI элементы
+    weak var delegate: ImagesListCellDelegate?
+    
     private let cellImageView: UIImageView = {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
@@ -41,10 +45,8 @@ final class ImagesListCell: UITableViewCell {
         return btn
     }()
     
-    // MARK: - Приватные переменные
     private var gradientLayer: CAGradientLayer?
     
-    // MARK: - Lifecycle
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -61,32 +63,32 @@ final class ImagesListCell: UITableViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        updateGradientFrame()
+        gradientLayer?.frame = CGRect(
+            x: 0,
+            y: cellImageView.bounds.height - 30,
+            width: cellImageView.bounds.width,
+            height: 30
+        )
     }
     
-    // MARK: - UI Setup
     private func setupUI() {
         contentView.addSubview(cellImageView)
         contentView.addSubview(cellTextLabel)
         contentView.addSubview(likeButton)
-        
         likeButton.addTarget(self, action: #selector(didTapLike), for: .touchUpInside)
     }
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // ImageView
             cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             cellImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
-            // Label
             cellTextLabel.leadingAnchor.constraint(equalTo: cellImageView.leadingAnchor, constant: 8),
             cellTextLabel.bottomAnchor.constraint(equalTo: cellImageView.bottomAnchor, constant: -8),
             cellTextLabel.trailingAnchor.constraint(lessThanOrEqualTo: cellImageView.trailingAnchor, constant: -8),
             
-            // Like Button
             likeButton.topAnchor.constraint(equalTo: contentView.topAnchor),
             likeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             likeButton.widthAnchor.constraint(equalToConstant: 44),
@@ -102,27 +104,15 @@ final class ImagesListCell: UITableViewCell {
         ]
         gradient.startPoint = CGPoint(x: 0.5, y: 1.0)
         gradient.endPoint = CGPoint(x: 0.5, y: 0.0)
-        
         cellImageView.layer.addSublayer(gradient)
         self.gradientLayer = gradient
     }
     
-    private func updateGradientFrame() {
-        gradientLayer?.frame = CGRect(
-            x: 0,
-            y: cellImageView.bounds.height - 30,
-            width: cellImageView.bounds.width,
-            height: 30
-        )
-    }
-    
-    // MARK: - Конфигурация
     func configure(with urlString: String, text: String, isLiked: Bool) {
         cellTextLabel.text = text
         likeButton.isSelected = isLiked
         
         let placeholder = UIImage(named: "Stub")
-        
         if let url = URL(string: urlString) {
             cellImageView.kf.setImage(
                 with: url,
@@ -140,8 +130,11 @@ final class ImagesListCell: UITableViewCell {
         cellImageView.image = UIImage(named: "Stub")
     }
     
-    // MARK: - Actions
     @objc private func didTapLike() {
-        likeButton.isSelected.toggle()
+        delegate?.imageListCellDidTapLike(self)
+    }
+    
+    func setIsLiked(_ isLiked: Bool) {
+        likeButton.isSelected = isLiked
     }
 }

@@ -87,14 +87,7 @@ final class ImagesListViewController: UIViewController {
         let photo = photos[indexPath.row]
         let text = dateFormatter.string(from: photo.createdAt ?? Date())
         cell.configure(with: photo.thumbImageURL, text: text, isLiked: photo.isLiked)
-    }
-
-    private func showSingleImage(for indexPath: IndexPath) {
-        let singleVC = SingleImageViewController()
-        singleVC.image = UIImage(named: "placeholder")
-        singleVC.modalPresentationStyle = .fullScreen
-        singleVC.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(singleVC, animated: true)
+        cell.delegate = self
     }
 }
 
@@ -118,7 +111,6 @@ extension ImagesListViewController: UITableViewDataSource {
 // MARK: - UITableViewDelegate
 extension ImagesListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        showSingleImage(for: indexPath)
         tableView.deselectRow(at: indexPath, animated: true)
     }
 
@@ -135,3 +127,34 @@ extension ImagesListViewController: UITableViewDelegate {
         }
     }
 }
+
+// MARK: - ImagesListCellDelegate
+extension ImagesListViewController: ImagesListCellDelegate {
+
+    func imageListCellDidTapLike(_ cell: ImagesListCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        let photo = photos[indexPath.row]
+
+        // Показываем блокирующий HUD
+        UIBlockingProgressHUD.show()
+
+        imagesListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) { [weak self] result in
+            guard let self = self else { return }
+
+            DispatchQueue.main.async {
+                // Скрываем HUD
+                UIBlockingProgressHUD.dismiss()
+
+                switch result {
+                case .success:
+                    self.photos = self.imagesListService.photos
+                    cell.setIsLiked(self.photos[indexPath.row].isLiked)
+                case .failure(let error):
+                    // TODO: показать ошибку через UIAlertController
+                    print("Ошибка лайка: \(error)")
+                }
+            }
+        }
+    }
+}
+

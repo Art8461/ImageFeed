@@ -11,7 +11,6 @@ final class ImagesListService {
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
     
     private(set) var photos: [Photo] = []
-    
     private var lastLoadedPage = 0
     private(set) var isLoading = false
     
@@ -23,27 +22,18 @@ final class ImagesListService {
         let urlString = "https://api.unsplash.com/photos?page=\(nextPage)&client_id=\(Constants.accessKey)"
         guard let url = URL(string: urlString) else { return }
         
-        let task = URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
             defer { self?.isLoading = false }
             guard let self = self else { return }
-            
-            guard let data = data, error == nil else {
-                print("Ошибка загрузки: \(String(describing: error))")
-                return
-            }
+            guard let data = data, error == nil else { return }
             
             do {
-                let photoResults = try JSONDecoder().decode([PhotoResult].self, from: data)
-                let newPhotos = photoResults.map { Photo(from: $0) }
-                
-                // Фильтруем новые фото, чтобы не было дубликатов по id
+                let newPhotos = try JSONDecoder().decode([Photo].self, from: data)
                 let uniquePhotos = newPhotos.filter { newPhoto in
                     !self.photos.contains(where: { $0.id == newPhoto.id })
                 }
                 
-                // Если есть новые уникальные фото, добавляем их
                 guard !uniquePhotos.isEmpty else { return }
-                
                 self.photos.append(contentsOf: uniquePhotos)
                 self.lastLoadedPage = nextPage
                 
@@ -56,7 +46,39 @@ final class ImagesListService {
             } catch {
                 print("Ошибка декодирования: \(error)")
             }
-        }
-        task.resume()
+        }.resume()
+    }
+    
+    func changeLike(photoId: String, isLike: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+        let urlString = "https://api.unsplash.com/photos/\(photoId)/like"
+        guard let url = URL(string: urlString) else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = isLike ? "POST" : "DELETE"
+        request.setValue("Client-ID \(Constants.accessKey)", forHTTPHeaderField: "Authorization")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] _, _, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            DispatchQueue.main.async {
+                if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
+                    var photo = self.photos[index]
+                    photo.isLiked = !photo.isLiked
+                    self.photos[index] = photo
+                    
+                    NotificationCenter.default.post(
+                        name: ImagesListService.didChangeNotification,
+                        object: nil
+                    )
+                }
+                
+                completion(.success(()))
+            }
+        }.resume()
     }
 }

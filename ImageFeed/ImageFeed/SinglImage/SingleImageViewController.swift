@@ -8,13 +8,8 @@
 import UIKit
 
 class SingleImageViewController: UIViewController {
-    var image: UIImage? {
-        didSet {
-            guard isViewLoaded, let image else { return }
-            
-            imageView.image = image
-        }
-    }
+    
+    var fullImageURL: URL!
     
     // MARK: - UI
         private let scrollZoom: UIScrollView = {
@@ -59,7 +54,7 @@ class SingleImageViewController: UIViewController {
         
         setupUI()
         setupConstraints()
-        imageView.image = image
+        loadImage()
     }
     private func setupUI() {
         view.addSubview(scrollZoom)
@@ -103,13 +98,36 @@ class SingleImageViewController: UIViewController {
         ])
     }
     
+    private func loadImage() {
+        UIBlockingProgressHUD.show()
+        imageView.kf.setImage(with: fullImageURL) {
+            [weak self] result in
+            guard let self = self else { return }
+            UIBlockingProgressHUD.dismiss()
+            switch result { case .success(let value):
+                self.imageView.frame.size = value.image.size
+                self.scrollZoom.contentSize = value.image.size
+            case .failure:
+                self.showError()
+            }
+        }
+    }
+    
+    private func showError() {
+        let alert = UIAlertController( title: "Что-то пошло не так.", message: "Попробовать ещё раз?", preferredStyle: .alert )
+        alert.addAction(UIAlertAction(title: "Не надо", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Повторить", style: .default) {
+            [weak self] _ in self?.loadImage()
+        })
+        present(alert, animated: true)
+    }
     // MARK: - Actions
     @objc private func didTapBackButton() {
         navigationController?.popViewController(animated: true)
     }
     
     @objc private func didTapShareButton() {
-        guard let image else { return }
+        guard let image=imageView.image else { return }
         let share = UIActivityViewController(activityItems: [image], applicationActivities: nil)
         present(share, animated: true)
     }

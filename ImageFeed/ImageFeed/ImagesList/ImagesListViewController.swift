@@ -6,8 +6,11 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ImagesListViewController: UIViewController {
+
+    private var isOpeningSingleImage = false // 🔒 Защита от повторных нажатий
 
     private let tableView: UITableView = {
         let tv = UITableView()
@@ -112,6 +115,15 @@ extension ImagesListViewController: UITableViewDataSource {
 extension ImagesListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        
+        let photo = photos[indexPath.row]
+        guard let fullImageURL = URL(string: photo.largeImageURL) else { return }
+
+        let singleImageVC = SingleImageViewController()
+        singleImageVC.fullImageURL = fullImageURL
+        singleImageVC.hidesBottomBarWhenPushed = true
+        
+        navigationController?.pushViewController(singleImageVC, animated: true)
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

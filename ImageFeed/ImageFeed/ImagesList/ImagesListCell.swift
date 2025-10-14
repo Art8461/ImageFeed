@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ImagesListCell: UITableViewCell {
     
@@ -58,11 +59,12 @@ final class ImagesListCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - Публичные методы
     override func layoutSubviews() {
         super.layoutSubviews()
         updateGradientFrame()
     }
+    
+    // MARK: - UI Setup
     private func setupUI() {
         contentView.addSubview(cellImageView)
         contentView.addSubview(cellTextLabel)
@@ -72,8 +74,8 @@ final class ImagesListCell: UITableViewCell {
     }
     
     private func setupConstraints() {
-        // ImageView
         NSLayoutConstraint.activate([
+            // ImageView
             cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
@@ -92,15 +94,14 @@ final class ImagesListCell: UITableViewCell {
         ])
     }
     
-    // MARK: - Приватные методы
     private func setupGradient() {
         let gradient = CAGradientLayer()
         gradient.colors = [
-            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0).cgColor, // низ
-            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 0.0).cgColor  // верх
+            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0).cgColor,
+            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 0.0).cgColor
         ]
-        gradient.startPoint = CGPoint(x: 0.5, y: 1.0) // снизу
-        gradient.endPoint = CGPoint(x: 0.5, y: 0.0)   // вверх
+        gradient.startPoint = CGPoint(x: 0.5, y: 1.0)
+        gradient.endPoint = CGPoint(x: 0.5, y: 0.0)
         
         cellImageView.layer.addSublayer(gradient)
         self.gradientLayer = gradient
@@ -116,10 +117,27 @@ final class ImagesListCell: UITableViewCell {
     }
     
     // MARK: - Конфигурация
-    func configure(with image: UIImage?, text: String, isLiked: Bool) {
-        cellImageView.image = image
+    func configure(with urlString: String, text: String, isLiked: Bool) {
         cellTextLabel.text = text
         likeButton.isSelected = isLiked
+        
+        let placeholder = UIImage(named: "Stub")
+        
+        if let url = URL(string: urlString) {
+            cellImageView.kf.setImage(
+                with: url,
+                placeholder: placeholder,
+                options: [.transition(.fade(0.3)), .cacheOriginalImage]
+            )
+        } else {
+            cellImageView.image = placeholder
+        }
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        cellImageView.kf.cancelDownloadTask()
+        cellImageView.image = UIImage(named: "Stub")
     }
     
     // MARK: - Actions

@@ -7,14 +7,9 @@
 
 import UIKit
 
-class SingleImageViewController: UIViewController {
-    var image: UIImage? {
-        didSet {
-            guard isViewLoaded, let image else { return }
-            
-            imageView.image = image
-        }
-    }
+final class SingleImageViewController: UIViewController {
+    
+    var fullImageURL: URL?
     
     // MARK: - UI
         private let scrollZoom: UIScrollView = {
@@ -36,7 +31,7 @@ class SingleImageViewController: UIViewController {
 
         private let exitSinglImage: UIButton = {
             let btn = UIButton(type: .system)
-            btn.setImage(UIImage(named: "Backward"), for: .normal)
+            btn.setImage(UIImage(resource: .backward), for: .normal)
             btn.tintColor = .white
             btn.translatesAutoresizingMaskIntoConstraints = false
             return btn
@@ -44,7 +39,7 @@ class SingleImageViewController: UIViewController {
 
         private let shareButton: UIButton = {
             let btn = UIButton(type: .system)
-            btn.setImage(UIImage(named: "Sharing"), for: .normal)
+            btn.setImage(UIImage(resource: .sharing), for: .normal)
             btn.tintColor = .white
             btn.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
             btn.layer.cornerRadius = 25
@@ -59,7 +54,7 @@ class SingleImageViewController: UIViewController {
         
         setupUI()
         setupConstraints()
-        imageView.image = image
+        loadImage()
     }
     private func setupUI() {
         view.addSubview(scrollZoom)
@@ -103,13 +98,45 @@ class SingleImageViewController: UIViewController {
         ])
     }
     
+    private func loadImage() {
+        guard let url = fullImageURL else {
+            showError()
+            return
+        }
+        
+        UIBlockingProgressHUD.show()
+        imageView.kf.setImage(with: url) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()  // HUD точно уберётся
+            switch result {
+            case .success(let value):
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.imageView.frame.size = value.image.size
+                    self.scrollZoom.contentSize = value.image.size
+                }
+            case .failure:
+                DispatchQueue.main.async {
+                    self?.showError()
+                }
+            }
+        }
+    }
+    
+    private func showError() {
+        let alert = UIAlertController( title: "Что-то пошло не так.", message: "Попробовать ещё раз?", preferredStyle: .alert )
+        alert.addAction(UIAlertAction(title: "Не надо", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Повторить", style: .default) {
+            [weak self] _ in self?.loadImage()
+        })
+        present(alert, animated: true)
+    }
     // MARK: - Actions
     @objc private func didTapBackButton() {
         navigationController?.popViewController(animated: true)
     }
     
     @objc private func didTapShareButton() {
-        guard let image else { return }
+        guard let image=imageView.image else { return }
         let share = UIActivityViewController(activityItems: [image], applicationActivities: nil)
         present(share, animated: true)
     }

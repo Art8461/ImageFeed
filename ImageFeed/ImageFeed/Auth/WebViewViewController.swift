@@ -89,7 +89,7 @@ final class WebViewViewController: UIViewController {
 
     private func setupCustomBackButton() {
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "BackwardBlack"),
+            image: UIImage(resource: .backwardBlack),
             style: .plain,
             target: self,
             action: #selector(backTapped)

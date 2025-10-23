@@ -15,7 +15,7 @@ final class ProfileViewController: UIViewController {
     private let photoProfile: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
-        imageView.image = UIImage(named: "avatar")
+        imageView.image = UIImage(resource: .avatar)
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 35
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -147,7 +147,7 @@ final class ProfileViewController: UIViewController {
         
         photoProfile.kf.setImage(
             with: url,
-            placeholder: UIImage(named: "avatar"), // картинка по умолчанию
+            placeholder: UIImage(resource: .avatar),
             options: [
                 .transition(.fade(0.3)), // плавное появление
                 .cacheOriginalImage       // кеширование

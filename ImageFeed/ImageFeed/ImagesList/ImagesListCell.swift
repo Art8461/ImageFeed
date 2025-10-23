@@ -6,13 +6,18 @@
 //
 
 import UIKit
+import Kingfisher
+
+protocol ImagesListCellDelegate: AnyObject {
+    func imageListCellDidTapLike(_ cell: ImagesListCell)
+}
 
 final class ImagesListCell: UITableViewCell {
     
-    // MARK: - Публичные переменные
     static let reuseIdentifier = "ImagesListCell"
     
-    // MARK: - UI элементы
+    weak var delegate: ImagesListCellDelegate?
+    
     private let cellImageView: UIImageView = {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
@@ -33,17 +38,15 @@ final class ImagesListCell: UITableViewCell {
     
     private let likeButton: UIButton = {
         let btn = UIButton(type: .system)
-        btn.setImage(UIImage(named: "NoActive"), for: .normal)
-        btn.setImage(UIImage(named: "Active"), for: .selected)
+        btn.setImage(UIImage(resource: .noActive).withRenderingMode(.alwaysOriginal), for: .normal)
+        btn.setImage(UIImage(resource: .active).withRenderingMode(.alwaysOriginal), for: .selected)
         btn.tintColor = .clear
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
     }()
     
-    // MARK: - Приватные переменные
     private var gradientLayer: CAGradientLayer?
     
-    // MARK: - Lifecycle
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -58,55 +61,8 @@ final class ImagesListCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - Публичные методы
     override func layoutSubviews() {
         super.layoutSubviews()
-        updateGradientFrame()
-    }
-    private func setupUI() {
-        contentView.addSubview(cellImageView)
-        contentView.addSubview(cellTextLabel)
-        contentView.addSubview(likeButton)
-        
-        likeButton.addTarget(self, action: #selector(didTapLike), for: .touchUpInside)
-    }
-    
-    private func setupConstraints() {
-        // ImageView
-        NSLayoutConstraint.activate([
-            cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
-            cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            cellImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
-            
-            // Label
-            cellTextLabel.leadingAnchor.constraint(equalTo: cellImageView.leadingAnchor, constant: 8),
-            cellTextLabel.bottomAnchor.constraint(equalTo: cellImageView.bottomAnchor, constant: -8),
-            cellTextLabel.trailingAnchor.constraint(lessThanOrEqualTo: cellImageView.trailingAnchor, constant: -8),
-            
-            // Like Button
-            likeButton.topAnchor.constraint(equalTo: contentView.topAnchor),
-            likeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            likeButton.widthAnchor.constraint(equalToConstant: 44),
-            likeButton.heightAnchor.constraint(equalToConstant: 44)
-        ])
-    }
-    
-    // MARK: - Приватные методы
-    private func setupGradient() {
-        let gradient = CAGradientLayer()
-        gradient.colors = [
-            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0).cgColor, // низ
-            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 0.0).cgColor  // верх
-        ]
-        gradient.startPoint = CGPoint(x: 0.5, y: 1.0) // снизу
-        gradient.endPoint = CGPoint(x: 0.5, y: 0.0)   // вверх
-        
-        cellImageView.layer.addSublayer(gradient)
-        self.gradientLayer = gradient
-    }
-    
-    private func updateGradientFrame() {
         gradientLayer?.frame = CGRect(
             x: 0,
             y: cellImageView.bounds.height - 30,
@@ -115,15 +71,70 @@ final class ImagesListCell: UITableViewCell {
         )
     }
     
-    // MARK: - Конфигурация
-    func configure(with image: UIImage?, text: String, isLiked: Bool) {
-        cellImageView.image = image
-        cellTextLabel.text = text
-        likeButton.isSelected = isLiked
+    private func setupUI() {
+        contentView.addSubview(cellImageView)
+        contentView.addSubview(cellTextLabel)
+        contentView.addSubview(likeButton)
+        likeButton.addTarget(self, action: #selector(didTapLike), for: .touchUpInside)
     }
     
-    // MARK: - Actions
+    private func setupConstraints() {
+        NSLayoutConstraint.activate([
+            cellImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            cellImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            cellImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            cellImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
+            
+            cellTextLabel.leadingAnchor.constraint(equalTo: cellImageView.leadingAnchor, constant: 8),
+            cellTextLabel.bottomAnchor.constraint(equalTo: cellImageView.bottomAnchor, constant: -8),
+            cellTextLabel.trailingAnchor.constraint(lessThanOrEqualTo: cellImageView.trailingAnchor, constant: -8),
+            
+            likeButton.topAnchor.constraint(equalTo: contentView.topAnchor),
+            likeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            likeButton.widthAnchor.constraint(equalToConstant: 44),
+            likeButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+    }
+    
+    private func setupGradient() {
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0).cgColor,
+            UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 0.0).cgColor
+        ]
+        gradient.startPoint = CGPoint(x: 0.5, y: 1.0)
+        gradient.endPoint = CGPoint(x: 0.5, y: 0.0)
+        cellImageView.layer.addSublayer(gradient)
+        self.gradientLayer = gradient
+    }
+    
+    func configure(with urlString: String, text: String, isLiked: Bool) {
+        cellTextLabel.text = text
+        likeButton.isSelected = isLiked
+        
+        let placeholder = UIImage(resource: .stub)
+        if let url = URL(string: urlString) {
+            cellImageView.kf.setImage(
+                with: url,
+                placeholder: placeholder,
+                options: [.transition(.fade(0.3)), .cacheOriginalImage]
+            )
+        } else {
+            cellImageView.image = placeholder
+        }
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        cellImageView.kf.cancelDownloadTask()
+        cellImageView.image = UIImage(resource: .stub)
+    }
+    
     @objc private func didTapLike() {
-        likeButton.isSelected.toggle()
+        delegate?.imageListCellDidTapLike(self)
+    }
+    
+    func setIsLiked(_ isLiked: Bool) {
+        likeButton.isSelected = isLiked
     }
 }

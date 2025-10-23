@@ -7,9 +7,9 @@
 
 import UIKit
 
-class SingleImageViewController: UIViewController {
+final class SingleImageViewController: UIViewController {
     
-    var fullImageURL: URL!
+    var fullImageURL: URL?
     
     // MARK: - UI
         private let scrollZoom: UIScrollView = {
@@ -99,16 +99,25 @@ class SingleImageViewController: UIViewController {
     }
     
     private func loadImage() {
+        guard let url = fullImageURL else {
+            showError()
+            return
+        }
+        
         UIBlockingProgressHUD.show()
-        imageView.kf.setImage(with: fullImageURL) {
-            [weak self] result in
-            guard let self = self else { return }
-            UIBlockingProgressHUD.dismiss()
-            switch result { case .success(let value):
-                self.imageView.frame.size = value.image.size
-                self.scrollZoom.contentSize = value.image.size
+        imageView.kf.setImage(with: url) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()  // HUD точно уберётся
+            switch result {
+            case .success(let value):
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.imageView.frame.size = value.image.size
+                    self.scrollZoom.contentSize = value.image.size
+                }
             case .failure:
-                self.showError()
+                DispatchQueue.main.async {
+                    self?.showError()
+                }
             }
         }
     }

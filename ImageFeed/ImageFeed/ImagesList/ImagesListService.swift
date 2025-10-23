@@ -11,11 +11,17 @@ final class ImagesListService {
     private let logger = AppLogger.shared
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
     
-    private let decoder = JSONDecoder() // ✅ Один экземпляр на весь сервис
+    private let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }()
     
     private(set) var photos: [Photo] = []
     private var lastLoadedPage = 0
     private(set) var isLoading = false
+    
+    
     
     // MARK: - Fetch Photos
     func fetchPhotosNextPage() {
@@ -31,8 +37,8 @@ final class ImagesListService {
         }
         
         URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
-            defer { self?.isLoading = false }
-            guard let self else { return }
+            guard let self = self else { return }
+            defer { self.isLoading = false }
             
             if let error {
                 self.logger.error("[ImagesListService.fetchPhotosNextPage]: [Network Error] [page=\(nextPage)] \(error)")

@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import UIKit
 
 struct Photo: Decodable {
     let id: String
@@ -16,7 +15,7 @@ struct Photo: Decodable {
     let thumbImageURL: String
     let largeImageURL: String
     var isLiked: Bool
-    
+
     private enum CodingKeys: String, CodingKey {
         case id, description, width, height, urls, liked_by_user, created_at
     }
@@ -25,6 +24,25 @@ struct Photo: Decodable {
         case thumb, full
     }
 
+    init(
+        id: String,
+        size: CGSize,
+        createdAt: Date?,
+        description: String?,
+        thumbImageURL: String,
+        largeImageURL: String,
+        isLiked: Bool
+    ) {
+        self.id = id
+        self.size = size
+        self.createdAt = createdAt
+        self.description = description
+        self.thumbImageURL = thumbImageURL
+        self.largeImageURL = largeImageURL
+        self.isLiked = isLiked
+    }
+
+    // Decodable init
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
@@ -39,10 +57,39 @@ struct Photo: Decodable {
         largeImageURL = try urlsContainer.decode(String.self, forKey: .full)
 
         if let createdAtString = try container.decodeIfPresent(String.self, forKey: .created_at) {
-            let formatter = ISO8601DateFormatter()
-            createdAt = formatter.date(from: createdAtString)
+            createdAt = Photo.iso8601Formatter.date(from: createdAtString)
         } else {
             createdAt = nil
         }
+    }
+
+    private static let iso8601Formatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        return f
+    }()
+
+    // MARK: - Copying with modification
+    func withToggledLike() -> Photo {
+        Photo(
+            id: id,
+            size: size,
+            createdAt: createdAt,
+            description: description,
+            thumbImageURL: thumbImageURL,
+            largeImageURL: largeImageURL,
+            isLiked: !isLiked
+        )
+    }
+
+    func withLike(_ isLiked: Bool) -> Photo {
+        Photo(
+            id: id,
+            size: size,
+            createdAt: createdAt,
+            description: description,
+            thumbImageURL: thumbImageURL,
+            largeImageURL: largeImageURL,
+            isLiked: isLiked
+        )
     }
 }

@@ -124,8 +124,10 @@ extension ImagesListViewController: UITableViewDelegate {
         let photo = photos[indexPath.row]
         logger.debug("Tapped photoId=\(photo.id) at row \(indexPath.row)")
 
-        guard let fullImageURL = URL(string: photo.largeImageURL) else { return }
-        logger.warning("Invalid fullImageURL for photoId=\(photo.id)")
+        guard let fullImageURL = URL(string: photo.largeImageURL) else {
+            logger.warning("Invalid fullImageURL for photoId=\(photo.id)")
+            return
+        }
 
         let singleImageVC = SingleImageViewController()
         singleImageVC.fullImageURL = fullImageURL

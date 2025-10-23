@@ -22,8 +22,8 @@ class TabBarController: UITabBarController {
         let imagesNav = UINavigationController(rootViewController: imagesListVC)
         imagesNav.tabBarItem = UITabBarItem(
             title: "",
-            image: UIImage(named: "ImageListTapBar"),
-            selectedImage: UIImage(named: "ImageListTapBarActive")
+            image: UIImage(resource: .imageListTapBar),
+            selectedImage: UIImage(resource: .imageListTapBarActive)
         )
         
         // Profile
@@ -31,8 +31,8 @@ class TabBarController: UITabBarController {
         let profileNav = UINavigationController(rootViewController: profileVC)
         profileNav.tabBarItem = UITabBarItem(
             title: "",
-            image: UIImage(named: "ProfileTabBar"),
-            selectedImage: UIImage(named: "ProfileTapBarActive")
+            image: UIImage(resource: .profileTabBar),
+            selectedImage: UIImage(resource: .profileTapBarActive)
         )
         
         viewControllers = [imagesNav, profileNav]

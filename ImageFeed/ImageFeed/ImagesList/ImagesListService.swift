@@ -8,7 +8,10 @@
 import Foundation
 
 final class ImagesListService {
+    private let logger = AppLogger.shared
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
+    
+    private let decoder = JSONDecoder() // ✅ Один экземпляр на весь сервис
     
     private(set) var photos: [Photo] = []
     private var lastLoadedPage = 0
@@ -23,7 +26,7 @@ final class ImagesListService {
         let urlString = "https://api.unsplash.com/photos?page=\(nextPage)&client_id=\(Constants.accessKey)"
         
         guard let url = URL(string: urlString) else {
-            print("[ImagesListService.fetchPhotosNextPage]: [URL Error] [urlString=\(urlString)]")
+            logger.debug("fetchPhotosNextPage called, isLoading=\(isLoading)")
             return
         }
         
@@ -32,17 +35,17 @@ final class ImagesListService {
             guard let self else { return }
             
             if let error {
-                print("[ImagesListService.fetchPhotosNextPage]: [Network Error] [page=\(nextPage)] \(error)")
+                self.logger.error("[ImagesListService.fetchPhotosNextPage]: [Network Error] [page=\(nextPage)] \(error)")
                 return
             }
             
             guard let data else {
-                print("[ImagesListService.fetchPhotosNextPage]: [Data Error] [page=\(nextPage)] data=nil")
+                self.logger.warning("[fetchPhotosNextPage] Data is nil on page \(nextPage)")
                 return
             }
             
             do {
-                let newPhotos = try JSONDecoder().decode([Photo].self, from: data)
+                let newPhotos = try self.decoder.decode([Photo].self, from: data) // ✅ используем общий decoder
                 let uniquePhotos = newPhotos.filter { newPhoto in
                     !self.photos.contains(where: { $0.id == newPhoto.id })
                 }
@@ -59,8 +62,8 @@ final class ImagesListService {
                 }
             } catch {
                 let jsonString = String(data: data, encoding: .utf8) ?? "Invalid UTF-8 data"
-                print("""
-                [ImagesListService.fetchPhotosNextPage]: [Decoding Error] [page=\(nextPage)] \(error)
+                self.logger.error("""
+                [ImagesListService.fetchPhotosNextPage]: [Decoding Error] [page=\(nextPage)]: \(error)
                 [Raw Data]: \(jsonString)
                 """)
             }
@@ -69,44 +72,51 @@ final class ImagesListService {
     
     // MARK: - Change Like
     func changeLike(photoId: String, isLike: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
-        let urlString = "https://api.unsplash.com/photos/\(photoId)/like"
-        guard let url = URL(string: urlString) else {
-            print("[ImagesListService.changeLike]: [URL Error] [photoId=\(photoId)]")
-            completion(.failure(NSError(domain: "ImagesListService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        guard let accessToken = OAuth2TokenKeychainStorage.shared.token else {
+            logger.warning("[changeLike] User not authorized")
+            completion(.failure(NSError(domain: "ImagesListService", code: -1,
+                                        userInfo: [NSLocalizedDescriptionKey: "User not authorized"])))
             return
         }
         
+        let urlString = "https://api.unsplash.com/photos/\(photoId)/like"
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NSError(domain: "ImagesListService", code: -1,
+                                        userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
+
         var request = URLRequest(url: url)
         request.httpMethod = isLike ? "POST" : "DELETE"
-        request.setValue("Client-ID \(Constants.accessKey)", forHTTPHeaderField: "Authorization")
-        
+        logger.debug("[changeLike] Sending \(isLike ? "POST" : "DELETE") request for photoId \(photoId)")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
         URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
             guard let self else { return }
-            
+
             if let error {
-                print("[ImagesListService.changeLike]: [Network Error] [photoId=\(photoId) isLike=\(isLike)] \(error)")
+                logger.error("[changeLike] Network error for photoId \(photoId): \(error)")
                 completion(.failure(error))
                 return
             }
-            
+
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
                 let code = (response as? HTTPURLResponse)?.statusCode ?? -1
-                print("[ImagesListService.changeLike]: [Response Error] [photoId=\(photoId) isLike=\(isLike)] statusCode=\(code)")
-                completion(.failure(NSError(domain: "ImagesListService", code: code, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                logger.error("[changeLike] Invalid response for photoId \(photoId), statusCode: \(code)")
+                completion(.failure(NSError(domain: "ImagesListService", code: code,
+                                            userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
                 return
             }
-            
+
             DispatchQueue.main.async {
+                self.logger.info("[changeLike] Photo \(photoId) successfully \(isLike ? "liked" : "unliked")")
                 if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
                     var photo = self.photos[index]
-                    photo.isLiked.toggle()
+                    photo.isLiked = isLike
                     self.photos[index] = photo
-                    
-                    NotificationCenter.default.post(
-                        name: ImagesListService.didChangeNotification,
-                        object: nil
-                    )
+
+                    NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
                 }
                 completion(.success(()))
             }

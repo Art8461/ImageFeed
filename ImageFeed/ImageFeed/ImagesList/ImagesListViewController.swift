@@ -9,6 +9,7 @@ import UIKit
 import Kingfisher
 
 final class ImagesListViewController: UIViewController {
+    private let logger = AppLogger.shared
 
     private var isOpeningSingleImage = false // 🔒 Защита от повторных нажатий
 
@@ -34,6 +35,7 @@ final class ImagesListViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        logger.debug("ImagesListViewController viewDidLoad")
         view.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
         setupTableView()
         setupObservers()
@@ -42,6 +44,7 @@ final class ImagesListViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        logger.debug("ImagesListViewController viewWillAppear")
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
 
@@ -79,6 +82,7 @@ final class ImagesListViewController: UIViewController {
         photos = imagesListService.photos
 
         if oldCount != newCount {
+            logger.info("Adding \(newCount - oldCount) new photos to tableView")
             let indexPaths = (oldCount..<newCount).map { IndexPath(row: $0, section: 0) }
             tableView.performBatchUpdates {
                 tableView.insertRows(at: indexPaths, with: .automatic)
@@ -91,6 +95,7 @@ final class ImagesListViewController: UIViewController {
         let text = dateFormatter.string(from: photo.createdAt ?? Date())
         cell.configure(with: photo.thumbImageURL, text: text, isLiked: photo.isLiked)
         cell.delegate = self
+        logger.debug("Configured cell for row \(indexPath.row), photoId=\(photo.id)")
     }
 }
 
@@ -117,7 +122,10 @@ extension ImagesListViewController: UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
         
         let photo = photos[indexPath.row]
+        logger.debug("Tapped photoId=\(photo.id) at row \(indexPath.row)")
+
         guard let fullImageURL = URL(string: photo.largeImageURL) else { return }
+        logger.warning("Invalid fullImageURL for photoId=\(photo.id)")
 
         let singleImageVC = SingleImageViewController()
         singleImageVC.fullImageURL = fullImageURL
@@ -146,6 +154,8 @@ extension ImagesListViewController: ImagesListCellDelegate {
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
         let photo = photos[indexPath.row]
+        
+        logger.info("Tapping like for photoId=\(photo.id), current isLiked=\(photo.isLiked)")
 
         // Показываем блокирующий HUD
         UIBlockingProgressHUD.show()
@@ -161,9 +171,10 @@ extension ImagesListViewController: ImagesListCellDelegate {
                 case .success:
                     self.photos = self.imagesListService.photos
                     cell.setIsLiked(self.photos[indexPath.row].isLiked)
+                    self.logger.info("Successfully changed like for photoId=\(photo.id) to \(self.photos[indexPath.row].isLiked)")
                 case .failure(let error):
                     // TODO: показать ошибку через UIAlertController
-                    print("Ошибка лайка: \(error)")
+                    self.logger.error("Failed to change like for photoId=\(photo.id): \(error)")
                 }
             }
         }

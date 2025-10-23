@@ -38,8 +38,8 @@ final class ImagesListCell: UITableViewCell {
     
     private let likeButton: UIButton = {
         let btn = UIButton(type: .system)
-        btn.setImage(UIImage(named: "NoActive")?.withRenderingMode(.alwaysOriginal), for: .normal)
-        btn.setImage(UIImage(named: "Active")?.withRenderingMode(.alwaysOriginal), for: .selected)
+        btn.setImage(UIImage(resource: .noActive).withRenderingMode(.alwaysOriginal), for: .normal)
+        btn.setImage(UIImage(resource: .active).withRenderingMode(.alwaysOriginal), for: .selected)
         btn.tintColor = .clear
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
@@ -112,7 +112,7 @@ final class ImagesListCell: UITableViewCell {
         cellTextLabel.text = text
         likeButton.isSelected = isLiked
         
-        let placeholder = UIImage(named: "Stub")
+        let placeholder = UIImage(resource: .stub)
         if let url = URL(string: urlString) {
             cellImageView.kf.setImage(
                 with: url,
@@ -127,7 +127,7 @@ final class ImagesListCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         cellImageView.kf.cancelDownloadTask()
-        cellImageView.image = UIImage(named: "Stub")
+        cellImageView.image = UIImage(resource: .stub)
     }
     
     @objc private func didTapLike() {

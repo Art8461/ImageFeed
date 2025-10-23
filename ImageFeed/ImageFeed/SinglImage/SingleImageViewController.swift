@@ -31,7 +31,7 @@ class SingleImageViewController: UIViewController {
 
         private let exitSinglImage: UIButton = {
             let btn = UIButton(type: .system)
-            btn.setImage(UIImage(named: "Backward"), for: .normal)
+            btn.setImage(UIImage(resource: .backward), for: .normal)
             btn.tintColor = .white
             btn.translatesAutoresizingMaskIntoConstraints = false
             return btn
@@ -39,7 +39,7 @@ class SingleImageViewController: UIViewController {
 
         private let shareButton: UIButton = {
             let btn = UIButton(type: .system)
-            btn.setImage(UIImage(named: "Sharing"), for: .normal)
+            btn.setImage(UIImage(resource: .sharing), for: .normal)
             btn.tintColor = .white
             btn.backgroundColor = UIColor(red: 26/255, green: 27/255, blue: 34/255, alpha: 1.0)
             btn.layer.cornerRadius = 25

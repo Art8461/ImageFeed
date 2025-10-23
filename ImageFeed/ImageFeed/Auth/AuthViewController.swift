@@ -17,7 +17,7 @@ final class AuthViewController: UIViewController {
     
     let authLogo: UIImageView = {
         let iv = UIImageView()
-        iv.image = UIImage(named: "AuthLogo")
+        iv.image = UIImage(resource: .authLogo)
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
         iv.translatesAutoresizingMaskIntoConstraints = false

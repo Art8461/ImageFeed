@@ -13,6 +13,7 @@ protocol AuthViewControllerDelegate: AnyObject {
 
 final class AuthViewController: UIViewController {
     
+    private let oauth2Service = OAuth2Service.shared
     weak var delegate: AuthViewControllerDelegate?
     
     let authLogo: UIImageView = {
@@ -73,6 +74,9 @@ final class AuthViewController: UIViewController {
         }
         print("➡️ Нажата кнопка Войти")
         let webVC = WebViewViewController()
+        let webViewPresenter = WebViewPresenter()
+        webVC.presenter = webViewPresenter
+        webViewPresenter.view = webVC
         webVC.delegate = self
         self.navigationController?.pushViewController(webVC, animated: true)
         print("➡️ Открыт WebViewViewController")
@@ -92,17 +96,32 @@ final class AuthViewController: UIViewController {
 }
 
 extension AuthViewController: WebViewViewControllerDelegate {
-    func webViewViewControllerDidAuthenticate(_ vc: WebViewViewController) {
-        print("✅ Пользователь успешно авторизовался в WebView")
-        self.delegate?.didAuthenticate(self)
+    func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
+        navigationController?.popViewController(animated: true)
+        UIBlockingProgressHUD.show()
+        fetchOAuthToken(code) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            guard let self = self else { return }
+            
+            switch result {
+            case .success:
+                self.delegate?.didAuthenticate(self)
+            case .failure:
+                self.showLoginErrorAlert()
+            }
+        }
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
         print("⚠️ Пользователь отменил авторизацию в WebView")
-        vc.dismiss(animated: true)
+        navigationController?.popViewController(animated: true)
     }
-    func webViewViewController(_ vc: WebViewViewController, didFailWithError error: Error) {
-        print("❌ Ошибка авторизации: \(error.localizedDescription)")
-        showLoginErrorAlert()
+}
+
+extension AuthViewController {
+    private func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
+        oauth2Service.fetchOAuthToken(code) { result in
+            completion(result)
+        }
     }
 }

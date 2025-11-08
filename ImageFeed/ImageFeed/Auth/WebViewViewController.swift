@@ -27,8 +27,10 @@ final class WebViewViewController: UIViewController & WebViewViewControllerProto
 
     // MARK: - UI Elements
     private let webView: WKWebView = {
-        let view = WKWebView()
+        let configuration = WKWebViewConfiguration()
+        let view = WKWebView(frame: .zero, configuration: configuration)
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.allowsBackForwardNavigationGestures = true
         return view
     }()
 
@@ -118,6 +120,7 @@ final class WebViewViewController: UIViewController & WebViewViewControllerProto
 
     // MARK: - WebViewViewControllerProtocol
     func load(request: URLRequest) {
+        print("➡️ WebView загружает запрос: \(request.url?.absoluteString ?? "nil")")
         webView.load(request)
     }
 
@@ -152,5 +155,24 @@ extension WebViewViewController: WKNavigationDelegate {
             return presenter?.code(from: url)
         }
         return nil
+    }
+    
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        print("🔹 WebView начал загрузку")
+    }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        print("✅ WebView завершил загрузку")
+    }
+    
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        print("❌ WebView ошибка загрузки: \(error.localizedDescription)")
+        if let urlError = error as? URLError {
+            print("❌ URLError код: \(urlError.code.rawValue), описание: \(urlError.localizedDescription)")
+        }
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        print("❌ WebView ошибка навигации: \(error.localizedDescription)")
     }
 }

@@ -74,7 +74,8 @@ final class AuthViewController: UIViewController {
         }
         print("➡️ Нажата кнопка Войти")
         let webVC = WebViewViewController()
-        let webViewPresenter = WebViewPresenter()
+        let authHelper = AuthHelper()
+        let webViewPresenter = WebViewPresenter(authHelper: authHelper)
         webVC.presenter = webViewPresenter
         webViewPresenter.view = webVC
         webVC.delegate = self

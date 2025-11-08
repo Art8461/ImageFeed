@@ -76,6 +76,7 @@ final class ImagesListCell: UITableViewCell {
         contentView.addSubview(cellTextLabel)
         contentView.addSubview(likeButton)
         likeButton.addTarget(self, action: #selector(didTapLike), for: .touchUpInside)
+        likeButton.accessibilityIdentifier = "NoActive"
     }
     
     private func setupConstraints() {
@@ -111,6 +112,7 @@ final class ImagesListCell: UITableViewCell {
     func configure(with urlString: String, text: String, isLiked: Bool) {
         cellTextLabel.text = text
         likeButton.isSelected = isLiked
+        likeButton.accessibilityIdentifier = isLiked ? "like button on" : "NoActive"
         
         let placeholder = UIImage(resource: .stub)
         if let url = URL(string: urlString) {
@@ -136,5 +138,6 @@ final class ImagesListCell: UITableViewCell {
     
     func setIsLiked(_ isLiked: Bool) {
         likeButton.isSelected = isLiked
+        likeButton.accessibilityIdentifier = isLiked ? "like button on" : "NoActive"
     }
 }

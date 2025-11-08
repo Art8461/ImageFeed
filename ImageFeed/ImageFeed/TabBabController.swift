@@ -25,6 +25,7 @@ class TabBarController: UITabBarController {
             image: UIImage(resource: .imageListTapBar),
             selectedImage: UIImage(resource: .imageListTapBarActive)
         )
+        imagesNav.tabBarItem.accessibilityIdentifier = "ImagesTab"
         
         // Profile
         let profileVC = ProfileViewController()
@@ -34,6 +35,7 @@ class TabBarController: UITabBarController {
             image: UIImage(resource: .profileTabBar),
             selectedImage: UIImage(resource: .profileTapBarActive)
         )
+        profileNav.tabBarItem.accessibilityIdentifier = "ProfileTab"
         
         viewControllers = [imagesNav, profileNav]
     }

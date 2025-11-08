@@ -91,6 +91,7 @@ final class WebViewViewController: UIViewController & WebViewViewControllerProto
             progressView.heightAnchor.constraint(equalToConstant: 2)
         ])
 
+        webView.accessibilityIdentifier = "UnsplashWebView"
         webView.navigationDelegate = self
         progressView.progress = 0
         progressView.tintColor = .systemBlue

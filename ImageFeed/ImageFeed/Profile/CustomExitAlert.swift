@@ -26,6 +26,7 @@ final class CustomExitAlert: UIViewController {
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.accessibilityIdentifier = "Пока, пока!"
         return label
     }()
     
@@ -46,6 +47,7 @@ final class CustomExitAlert: UIViewController {
         button.setTitleColor(.systemBlue, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .regular)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityIdentifier = "Да"
         return button
     }()
     

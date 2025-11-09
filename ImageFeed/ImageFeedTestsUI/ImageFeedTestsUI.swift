@@ -8,55 +8,55 @@
 import XCTest
 
 final class ImageFeedTestsUI: XCTestCase {
-
-    private let app = XCUIApplication() // переменная приложения
-        
-        override func setUpWithError() throws {
-            continueAfterFailure = false // настройка выполнения тестов, которая прекратит выполнения тестов, если в тесте что-то пошло не так
-            
-            app.launch() // запускаем приложение перед каждым тестом
-        }
-        
-        func testAuth() throws {
-                // Нажимаем кнопку "Войти"
-                let enterButton = app.buttons["Войти"]
-                XCTAssertTrue(enterButton.waitForExistence(timeout: 5))
-                enterButton.tap()
-                
-                // Ожидаем появления WebView
-                let webView = app.webViews["UnsplashWebView"]
-                XCTAssertTrue(webView.waitForExistence(timeout: 10))
-
-                // Ждем загрузки страницы авторизации
-                sleep(3)
-
-                let loginTextField = webView.descendants(matching: .textField).element
-                XCTAssertTrue(loginTextField.waitForExistence(timeout: 10))
-                
-                loginTextField.tap()
-                loginTextField.typeText("ваш логин")
-                webView.swipeUp()
-                
-                let passwordTextField = webView.descendants(matching: .secureTextField).element
-                XCTAssertTrue(passwordTextField.waitForExistence(timeout: 10))
-                
-                passwordTextField.tap()
-                passwordTextField.typeText("ваш пароль")
-                webView.swipeUp()
-                
-                // Нажимаем кнопку "Войти" в WebView
-                let loginButton = webView.buttons["Login"]
-                XCTAssertTrue(loginButton.waitForExistence(timeout: 5))
-                loginButton.tap()
-                
-                // Ожидаем появления таблицы с изображениями после авторизации
-                let tablesQuery = app.tables
-                let cell = tablesQuery.children(matching: .cell).element(boundBy: 0)
-                
-                XCTAssertTrue(cell.waitForExistence(timeout: 10))
-            }
     
-        func testFeed() throws {
+    private let app = XCUIApplication() // переменная приложения
+    
+    override func setUpWithError() throws {
+        continueAfterFailure = false // настройка выполнения тестов, которая прекратит выполнения тестов, если в тесте что-то пошло не так
+        
+        app.launch() // запускаем приложение перед каждым тестом
+    }
+    
+    func testAuth() throws {
+        // Нажимаем кнопку "Войти"
+        let enterButton = app.buttons["Войти"]
+        XCTAssertTrue(enterButton.waitForExistence(timeout: 5))
+        enterButton.tap()
+        
+        // Ожидаем появления WebView
+        let webView = app.webViews["UnsplashWebView"]
+        XCTAssertTrue(webView.waitForExistence(timeout: 10))
+        
+        // Ждем загрузки страницы авторизации
+        sleep(3)
+        
+        let loginTextField = webView.descendants(matching: .textField).element
+        XCTAssertTrue(loginTextField.waitForExistence(timeout: 10))
+        
+        loginTextField.tap()
+        loginTextField.typeText("art8461@gmail.com")
+        webView.swipeUp()
+        
+        let passwordTextField = webView.descendants(matching: .secureTextField).element
+        XCTAssertTrue(passwordTextField.waitForExistence(timeout: 10))
+        
+        passwordTextField.tap()
+        passwordTextField.typeText("Svarog10")
+        webView.swipeUp()
+        
+        // Нажимаем кнопку "Войти" в WebView
+        let loginButton = webView.buttons["Login"]
+        XCTAssertTrue(loginButton.waitForExistence(timeout: 5))
+        loginButton.tap()
+        
+        // Ожидаем появления таблицы с изображениями после авторизации
+        let tablesQuery = app.tables
+        let cell = tablesQuery.children(matching: .cell).element(boundBy: 0)
+        
+        XCTAssertTrue(cell.waitForExistence(timeout: 10))
+    }
+    
+    func testFeed() throws {
         let tablesQuery = app.tables
         
         let cell = tablesQuery.children(matching: .cell).element(boundBy: 0)
@@ -69,6 +69,9 @@ final class ImageFeedTestsUI: XCTestCase {
         // Нажимаем на кнопку лайка (может быть "NoActive" или "like button on")
         let likeButton = likeButtonCell.buttons.firstMatch
         XCTAssertTrue(likeButton.waitForExistence(timeout: 2))
+        likeButton.tap()
+        
+        sleep(2)
         likeButton.tap()
         
         sleep(2)

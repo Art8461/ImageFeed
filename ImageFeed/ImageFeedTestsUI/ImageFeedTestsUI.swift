@@ -1,13 +1,13 @@
 //
-//  ImageFeedTests1.swift
-//  ImageFeedTests1
+//  ImageFeedTestsUI.swift
+//  ImageFeedTestsUI
 //
 //  Created by Artem Kuzmenko on 08.11.2025.
 //
 
 import XCTest
 
-final class ImageFeedTests1: XCTestCase {
+final class ImageFeedTestsUI: XCTestCase {
 
     private let app = XCUIApplication() // переменная приложения
         
@@ -34,14 +34,14 @@ final class ImageFeedTests1: XCTestCase {
                 XCTAssertTrue(loginTextField.waitForExistence(timeout: 10))
                 
                 loginTextField.tap()
-                loginTextField.typeText("Ваш логин")
+                loginTextField.typeText("ваш логин")
                 webView.swipeUp()
                 
                 let passwordTextField = webView.descendants(matching: .secureTextField).element
                 XCTAssertTrue(passwordTextField.waitForExistence(timeout: 10))
                 
                 passwordTextField.tap()
-                passwordTextField.typeText("Ваш пароль")
+                passwordTextField.typeText("ваш пароль")
                 webView.swipeUp()
                 
                 // Нажимаем кнопку "Войти" в WebView

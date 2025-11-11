@@ -27,6 +27,7 @@ final class ProfileViewController: UIViewController {
         label.textColor = .white
         label.font = UIFont.systemFont(ofSize: 23, weight: .bold)
         label.text = "Имя пользователя"
+        label.accessibilityIdentifier = "profile_name_label"
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -36,6 +37,7 @@ final class ProfileViewController: UIViewController {
         label.textColor = .gray
         label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         label.text = "@nickname"
+        label.accessibilityIdentifier = "profile_nickname_label"
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -55,6 +57,7 @@ final class ProfileViewController: UIViewController {
         button.setImage(UIImage(systemName: "ipad.and.arrow.forward"), for: .normal)
         button.tintColor = UIColor(red: 245/255, green: 107/255, blue: 108/255, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityIdentifier = "logout button"
         return button
     }()
     

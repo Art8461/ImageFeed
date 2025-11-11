@@ -34,6 +34,7 @@ final class SingleImageViewController: UIViewController {
             btn.setImage(UIImage(resource: .backward), for: .normal)
             btn.tintColor = .white
             btn.translatesAutoresizingMaskIntoConstraints = false
+            btn.accessibilityIdentifier = "exitSinglImage"
             return btn
         }()
 
@@ -87,8 +88,8 @@ final class SingleImageViewController: UIViewController {
         // Exit Button
             exitSinglImage.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 11),
             exitSinglImage.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
-            exitSinglImage.widthAnchor.constraint(equalToConstant: 24),
-            exitSinglImage.heightAnchor.constraint(equalToConstant: 24),
+            exitSinglImage.widthAnchor.constraint(equalToConstant: 44),
+            exitSinglImage.heightAnchor.constraint(equalToConstant: 44),
             
         // Share Button
             shareButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),

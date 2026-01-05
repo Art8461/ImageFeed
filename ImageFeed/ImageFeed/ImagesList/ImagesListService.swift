@@ -21,11 +21,18 @@ final class ImagesListService {
     private var lastLoadedPage = 0
     private(set) var isLoading = false
     
-    
+    func reset() {
+        photos = []
+        lastLoadedPage = 0
+        isLoading = false
+    }
     
     // MARK: - Fetch Photos
-    func fetchPhotosNextPage() {
-        guard !isLoading else { return }
+    func fetchPhotosNextPage(completion: (() -> Void)? = nil) {
+        guard !isLoading else {
+            DispatchQueue.main.async { completion?() }
+            return
+        }
         isLoading = true
         
         let nextPage = lastLoadedPage + 1
@@ -51,11 +58,18 @@ final class ImagesListService {
             request = comps?.url.map { URLRequest(url: $0) }
             logger.warning("[fetchPhotosNextPage] page=\(nextPage) without token, using client_id")
         }
-        guard let urlRequest = request else { return }
+        guard let urlRequest = request else {
+            isLoading = false
+            DispatchQueue.main.async { completion?() }
+            return
+        }
         
         URLSession.shared.dataTask(with: urlRequest) { [weak self] data, _, error in
             guard let self = self else { return }
-            defer { self.isLoading = false }
+            defer {
+                self.isLoading = false
+                DispatchQueue.main.async { completion?() }
+            }
             
             if let error {
                 self.logger.error("[ImagesListService.fetchPhotosNextPage]: [Network Error] [page=\(nextPage)] \(error)")

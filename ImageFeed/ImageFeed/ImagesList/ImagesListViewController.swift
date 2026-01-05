@@ -22,6 +22,7 @@ final class ImagesListViewController: UIViewController {
         tv.register(ImagesListCell.self, forCellReuseIdentifier: ImagesListCell.reuseIdentifier)
         return tv
     }()
+    private let refreshControl = UIRefreshControl()
 
     private let imagesListService = ImagesListService()
     private var observer: NSObjectProtocol?
@@ -64,6 +65,9 @@ final class ImagesListViewController: UIViewController {
         ])
         tableView.delegate = self
         tableView.dataSource = self
+        
+        refreshControl.addTarget(self, action: #selector(refreshTriggered), for: .valueChanged)
+        tableView.refreshControl = refreshControl
     }
 
     private func setupObservers() {
@@ -87,6 +91,19 @@ final class ImagesListViewController: UIViewController {
             tableView.performBatchUpdates {
                 tableView.insertRows(at: indexPaths, with: .automatic)
             }
+        }
+    }
+    
+    @objc private func refreshTriggered() {
+        guard !imagesListService.isLoading else {
+            refreshControl.endRefreshing()
+            return
+        }
+        imagesListService.reset()
+        photos = []
+        tableView.reloadData()
+        imagesListService.fetchPhotosNextPage { [weak self] in
+            self?.refreshControl.endRefreshing()
         }
     }
 

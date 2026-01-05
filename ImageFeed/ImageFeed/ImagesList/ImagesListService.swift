@@ -29,14 +29,31 @@ final class ImagesListService {
         isLoading = true
         
         let nextPage = lastLoadedPage + 1
-        let urlString = "https://api.unsplash.com/photos?page=\(nextPage)&client_id=\(Constants.accessKey)"
-        
-        guard let url = URL(string: urlString) else {
-            logger.debug("fetchPhotosNextPage called, isLoading=\(isLoading)")
-            return
+        var urlComponents = URLComponents(
+            url: Constants.defaultBaseURL.appendingPathComponent("photos"),
+            resolvingAgainstBaseURL: false
+        )
+        urlComponents?.queryItems = [
+            URLQueryItem(name: "page", value: "\(nextPage)")
+        ]
+        var request: URLRequest?
+        if let token = OAuth2TokenKeychainStorage.shared.token {
+            request = urlComponents?.url.map { url in
+                var req = URLRequest(url: url)
+                req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                return req
+            }
+            logger.debug("[fetchPhotosNextPage] page=\(nextPage) using Authorization header")
+        } else if let url = urlComponents?.url {
+            // fallback для неавторизованного режима
+            var comps = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            comps?.queryItems?.append(URLQueryItem(name: "client_id", value: Constants.accessKey))
+            request = comps?.url.map { URLRequest(url: $0) }
+            logger.warning("[fetchPhotosNextPage] page=\(nextPage) without token, using client_id")
         }
+        guard let urlRequest = request else { return }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+        URLSession.shared.dataTask(with: urlRequest) { [weak self] data, _, error in
             guard let self = self else { return }
             defer { self.isLoading = false }
             

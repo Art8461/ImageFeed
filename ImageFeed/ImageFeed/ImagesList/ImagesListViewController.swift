@@ -93,7 +93,12 @@ final class ImagesListViewController: UIViewController {
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         let photo = photos[indexPath.row]
         let text = dateFormatter.string(from: photo.createdAt ?? Date())
-        cell.configure(with: photo.thumbImageURL, text: text, isLiked: photo.isLiked)
+        cell.configure(
+            thumbURL: photo.thumbImageURL,
+            highURL: photo.regularImageURL,
+            text: text,
+            isLiked: photo.isLiked
+        )
         cell.delegate = self
         logger.debug("Configured cell for row \(indexPath.row), photoId=\(photo.id)")
     }

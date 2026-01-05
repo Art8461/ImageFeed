@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreGraphics
 
 struct Photo: Decodable {
     let id: String
@@ -13,6 +14,7 @@ struct Photo: Decodable {
     let createdAt: Date?
     let description: String?
     let thumbImageURL: String
+    let regularImageURL: String
     let largeImageURL: String
     var isLiked: Bool
 
@@ -21,7 +23,7 @@ struct Photo: Decodable {
     }
 
     private enum UrlsKeys: String, CodingKey {
-        case thumb, full
+        case thumb, regular, full
     }
 
     init(
@@ -30,6 +32,7 @@ struct Photo: Decodable {
         createdAt: Date?,
         description: String?,
         thumbImageURL: String,
+        regularImageURL: String,
         largeImageURL: String,
         isLiked: Bool
     ) {
@@ -38,6 +41,7 @@ struct Photo: Decodable {
         self.createdAt = createdAt
         self.description = description
         self.thumbImageURL = thumbImageURL
+        self.regularImageURL = regularImageURL
         self.largeImageURL = largeImageURL
         self.isLiked = isLiked
     }
@@ -54,6 +58,7 @@ struct Photo: Decodable {
 
         let urlsContainer = try container.nestedContainer(keyedBy: UrlsKeys.self, forKey: .urls)
         thumbImageURL = try urlsContainer.decode(String.self, forKey: .thumb)
+        regularImageURL = try urlsContainer.decodeIfPresent(String.self, forKey: .regular) ?? thumbImageURL
         largeImageURL = try urlsContainer.decode(String.self, forKey: .full)
 
         if let createdAtString = try container.decodeIfPresent(String.self, forKey: .created_at) {
@@ -76,6 +81,7 @@ struct Photo: Decodable {
             createdAt: createdAt,
             description: description,
             thumbImageURL: thumbImageURL,
+            regularImageURL: regularImageURL,
             largeImageURL: largeImageURL,
             isLiked: !isLiked
         )
@@ -88,6 +94,7 @@ struct Photo: Decodable {
             createdAt: createdAt,
             description: description,
             thumbImageURL: thumbImageURL,
+            regularImageURL: regularImageURL,
             largeImageURL: largeImageURL,
             isLiked: isLiked
         )

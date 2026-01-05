@@ -109,20 +109,30 @@ final class ImagesListCell: UITableViewCell {
         self.gradientLayer = gradient
     }
     
-    func configure(with urlString: String, text: String, isLiked: Bool) {
+    func configure(thumbURL: String, highURL: String, text: String, isLiked: Bool) {
         cellTextLabel.text = text
         likeButton.isSelected = isLiked
         likeButton.accessibilityIdentifier = isLiked ? "like button on" : "NoActive"
         
         let placeholder = UIImage(resource: .stub)
-        if let url = URL(string: urlString) {
-            cellImageView.kf.setImage(
-                with: url,
-                placeholder: placeholder,
-                options: [.transition(.fade(0.3)), .cacheOriginalImage]
+        let thumb = URL(string: thumbURL)
+        let high = URL(string: highURL)
+        
+        cellImageView.kf.setImage(
+            with: thumb,
+            placeholder: placeholder,
+            options: [.transition(.fade(0.15)), .cacheOriginalImage]
+        ) { [weak self] _ in
+            guard let self, let high else { return }
+            self.cellImageView.kf.setImage(
+                with: high,
+                placeholder: self.cellImageView.image,
+                options: [
+                    .transition(.fade(0.25)),
+                    .keepCurrentImageWhileLoading,
+                    .cacheOriginalImage
+                ]
             )
-        } else {
-            cellImageView.image = placeholder
         }
     }
     

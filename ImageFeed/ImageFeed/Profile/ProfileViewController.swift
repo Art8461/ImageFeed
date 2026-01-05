@@ -61,9 +61,37 @@ final class ProfileViewController: UIViewController {
         return button
     }()
     
+    private let favoritesTitle: UILabel = {
+        let label = UILabel()
+        label.text = "Избранное"
+        label.textColor = .white
+        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var favoritesCollection: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumInteritemSpacing = 6
+        layout.minimumLineSpacing = 6
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.backgroundColor = .clear
+        cv.translatesAutoresizingMaskIntoConstraints = false
+        cv.register(FavoritePhotoCell.self, forCellWithReuseIdentifier: FavoritePhotoCell.reuseId)
+        cv.dataSource = self
+        cv.delegate = self
+        return cv
+    }()
+    
     // MARK: - Observers (новый API)
     private var profileObserver: NSObjectProtocol?
     private var profileImageObserver: NSObjectProtocol?
+    
+    // MARK: - Data
+    private let profileService = ProfileService.shared
+    private let favoritesService = FavoritesService()
+    private var favoritePhotos: [Photo] = []
+    private var isRefreshingProfile = false
     
     // MARK: - Жизненный цикл
     override func viewDidLoad() {
@@ -100,11 +128,14 @@ final class ProfileViewController: UIViewController {
         if let avatar = ProfileImageService.shared.avatarURL {
             updateAvatar(urlString: avatar)
         }
+        
+        refreshProfileIfNeeded()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+        refreshProfileIfNeeded()
     }
     
     // MARK: - Настройка интерфейса
@@ -115,6 +146,8 @@ final class ProfileViewController: UIViewController {
         view.addSubview(userNickName)
         view.addSubview(descriptionProfile)
         view.addSubview(exitButton)
+        view.addSubview(favoritesTitle)
+        view.addSubview(favoritesCollection)
         
         exitButton.addTarget(self, action: #selector(exitButtonTapped), for: .touchUpInside)
     }
@@ -141,6 +174,17 @@ final class ProfileViewController: UIViewController {
             exitButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             exitButton.widthAnchor.constraint(equalToConstant: 44),
             exitButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        
+        NSLayoutConstraint.activate([
+            favoritesTitle.topAnchor.constraint(equalTo: descriptionProfile.bottomAnchor, constant: 24),
+            favoritesTitle.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            favoritesTitle.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            favoritesCollection.topAnchor.constraint(equalTo: favoritesTitle.bottomAnchor, constant: 12),
+            favoritesCollection.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            favoritesCollection.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            favoritesCollection.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
     
@@ -170,6 +214,39 @@ final class ProfileViewController: UIViewController {
         userName.text = profile.name
         userNickName.text = profile.loginName
         descriptionProfile.text = profile.bio
+        loadFavorites(username: profile.username)
+    }
+    
+    private func refreshProfileIfNeeded() {
+        guard !isRefreshingProfile else { return }
+        guard let token = OAuth2TokenKeychainStorage.shared.token else { return }
+        isRefreshingProfile = true
+        profileService.fetchProfile(token) { [weak self] result in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                self.isRefreshingProfile = false
+                switch result {
+                case .success(let profile):
+                    ProfileImageService.shared.fetchProfileImageURL(username: profile.username) { _ in }
+                    self.updateProfileUI(profile: profile)
+                case .failure(let error):
+                    print("[ProfileViewController] Failed to refresh profile: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func loadFavorites(username: String) {
+        favoritesService.fetchFavorites(username: username) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let photos):
+                self.favoritePhotos = photos
+                self.favoritesCollection.reloadData()
+            case .failure(let error):
+                print("[ProfileViewController] Failed to load favorites: \(error.localizedDescription)")
+            }
+        }
     }
     
     // MARK: - Действия
@@ -206,5 +283,36 @@ final class ProfileViewController: UIViewController {
         }
         
         present(alert, animated: true)
+    }
+}
+
+// MARK: - UICollectionViewDataSource & DelegateFlowLayout
+extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        favoritePhotos.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(
+            withReuseIdentifier: FavoritePhotoCell.reuseId,
+            for: indexPath
+        ) as? FavoritePhotoCell else { return UICollectionViewCell() }
+        let photo = favoritePhotos[indexPath.item]
+        cell.configure(urlString: photo.thumbImageURL)
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let totalSpacing: CGFloat = 6 * 2 // two gaps between 3 items
+        let width = (collectionView.bounds.width - totalSpacing) / 3
+        return CGSize(width: width, height: width)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        6
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        6
     }
 }

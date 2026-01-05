@@ -56,10 +56,54 @@ final class SplashViewController: UIViewController {
                         self?.switchToTabBarController() // только после загрузки
                     case .failure(let error):
                         print("❌ Ошибка загрузки профиля: \(error)")
+                        self?.handleProfileLoadFailure(error: error)
                     }
                 }
             }
         }
+    
+    private func handleProfileLoadFailure(error: Error) {
+        // 401/403 — не стираем токен, даём выбор: повторить или вручную выйти и авторизоваться заново
+        if case NetworkError.httpStatusCode(let code) = error, (code == 401 || code == 403) {
+            let alert = UIAlertController(
+                title: "Доступ отклонён",
+                message: "Сервер вернул код \(code). Можно повторить попытку или войти заново.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "Повторить", style: .default) { [weak self] _ in
+                guard let token = self?.storage.token else { return }
+                self?.fetchProfile(token: token)
+            })
+            alert.addAction(UIAlertAction(title: "Войти заново", style: .destructive) { [weak self] _ in
+                self?.storage.token = nil
+                self?.hasSwitchedToTabBar = false
+                self?.showAuthController()
+            })
+            alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
+            present(alert, animated: true)
+            return
+        }
+
+        // временные сетевые/другие ошибки — сохраняем токен и даём шанс повторить
+        let message: String
+        if case NetworkError.urlRequestError(let underlying) = error {
+            message = underlying.localizedDescription
+        } else {
+            message = "Не удалось загрузить профиль. Проверьте подключение к интернету и попробуйте ещё раз."
+        }
+        
+        let alert = UIAlertController(
+            title: "Ошибка загрузки профиля",
+            message: message,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Повторить", style: .default) { [weak self] _ in
+            guard let token = self?.storage.token else { return }
+            self?.fetchProfile(token: token)
+        })
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
+        present(alert, animated: true)
+    }
     
     private func showAuthController() {
         // Создаём AuthViewController через код

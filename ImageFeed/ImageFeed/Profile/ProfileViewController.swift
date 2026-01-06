@@ -92,6 +92,7 @@ final class ProfileViewController: UIViewController {
     private let favoritesService = FavoritesService()
     private var favoritePhotos: [Photo] = []
     private var isRefreshingProfile = false
+    private var currentUsername: String?
     
     // MARK: - Жизненный цикл
     override func viewDidLoad() {
@@ -214,6 +215,7 @@ final class ProfileViewController: UIViewController {
         userName.text = profile.name
         userNickName.text = profile.loginName
         descriptionProfile.text = profile.bio
+        currentUsername = profile.username
         loadFavorites(username: profile.username)
     }
     
@@ -237,7 +239,8 @@ final class ProfileViewController: UIViewController {
     }
     
     private func loadFavorites(username: String) {
-        favoritesService.fetchFavorites(username: username) { [weak self] result in
+        favoritesService.reset()
+        favoritesService.fetchNextPage(username: username) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let photos):
@@ -311,6 +314,23 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
         single.isLiked = photo.isLiked
         single.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(single, animated: true)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        guard let username = currentUsername else { return }
+        let threshold = favoritePhotos.count - 4
+        if indexPath.item >= threshold {
+            favoritesService.fetchNextPage(username: username) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let photos):
+                    self.favoritePhotos = photos
+                    self.favoritesCollection.reloadData()
+                case .failure(let error):
+                    print("[ProfileViewController] Failed to load more favorites: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {

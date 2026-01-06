@@ -8,6 +8,7 @@
 import Foundation
 
 final class ImagesListService {
+    static let shared = ImagesListService()
     private let logger = AppLogger.shared
     static let didChangeNotification = Notification.Name("ImagesListServiceDidChange")
     

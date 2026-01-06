@@ -24,7 +24,7 @@ final class ImagesListViewController: UIViewController {
     }()
     private let refreshControl = UIRefreshControl()
 
-    private let imagesListService = ImagesListService()
+    private let imagesListService = ImagesListService.shared
     private var observer: NSObjectProtocol?
     private var photos: [Photo] = []
     private lazy var dateFormatter: DateFormatter = {
@@ -199,11 +199,21 @@ extension ImagesListViewController: ImagesListCellDelegate {
                     cell.setIsLiked(self.photos[indexPath.row].isLiked)
                     self.logger.info("Successfully changed like for photoId=\(photo.id) to \(self.photos[indexPath.row].isLiked)")
                 case .failure(let error):
-                    // TODO: показать ошибку через UIAlertController
                     self.logger.error("Failed to change like for photoId=\(photo.id): \(error)")
+                    self.showLikeError(error: error)
                 }
             }
         }
+    }
+    
+    private func showLikeError(error: Error) {
+        let alert = UIAlertController(
+            title: "Не удалось поставить лайк",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default))
+        present(alert, animated: true)
     }
 }
 

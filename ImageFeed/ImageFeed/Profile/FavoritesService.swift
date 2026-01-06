@@ -17,10 +17,21 @@ final class FavoritesService {
     
     private(set) var likedPhotos: [Photo] = []
     private var isLoading = false
+    private var currentPage = 0
+    private let perPage = 30
+    private var hasMore = true
     
-    func fetchFavorites(username: String, completion: @escaping (Result<[Photo], Error>) -> Void) {
-        guard !isLoading else { return }
+    func reset() {
+        likedPhotos = []
+        isLoading = false
+        currentPage = 0
+        hasMore = true
+    }
+    
+    func fetchNextPage(username: String, completion: @escaping (Result<[Photo], Error>) -> Void) {
+        guard !isLoading, hasMore else { return }
         isLoading = true
+        currentPage += 1
         
         guard let token = OAuth2TokenKeychainStorage.shared.token else {
             logger.warning("[FavoritesService] User not authorized")
@@ -35,8 +46,8 @@ final class FavoritesService {
             resolvingAgainstBaseURL: false
         )
         components?.queryItems = [
-            URLQueryItem(name: "page", value: "1"),
-            URLQueryItem(name: "per_page", value: "30")
+            URLQueryItem(name: "page", value: "\(currentPage)"),
+            URLQueryItem(name: "per_page", value: "\(perPage)")
         ]
         
         guard let url = components?.url else {
@@ -67,8 +78,9 @@ final class FavoritesService {
             
             do {
                 let photos = try self.decoder.decode([Photo].self, from: data)
-                self.likedPhotos = photos
-                DispatchQueue.main.async { completion(.success(photos)) }
+                self.likedPhotos.append(contentsOf: photos)
+                if photos.count < self.perPage { self.hasMore = false }
+                DispatchQueue.main.async { completion(.success(self.likedPhotos)) }
             } catch {
                 self.logger.error("[FavoritesService] Decoding error: \(error)")
                 DispatchQueue.main.async { completion(.failure(error)) }

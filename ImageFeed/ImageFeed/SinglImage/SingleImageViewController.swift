@@ -14,7 +14,7 @@ final class SingleImageViewController: UIViewController {
     var photoId: String?
     var isLiked: Bool = false
     
-    private let imagesListService = ImagesListService()
+    private let imagesListService = ImagesListService.shared
     private var isChangingLike = false
     
     // MARK: - UI

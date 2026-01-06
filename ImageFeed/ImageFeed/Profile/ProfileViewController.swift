@@ -302,6 +302,15 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
         return cell
     }
     
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let photo = favoritePhotos[indexPath.item]
+        guard let url = URL(string: photo.largeImageURL) else { return }
+        let single = SingleImageViewController()
+        single.fullImageURL = url
+        single.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(single, animated: true)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let totalSpacing: CGFloat = 6 * 2 // two gaps between 3 items
         let width = (collectionView.bounds.width - totalSpacing) / 3

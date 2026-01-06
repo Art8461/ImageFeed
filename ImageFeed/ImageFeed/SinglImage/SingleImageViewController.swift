@@ -6,10 +6,16 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class SingleImageViewController: UIViewController {
     
     var fullImageURL: URL?
+    var photoId: String?
+    var isLiked: Bool = false
+    
+    private let imagesListService = ImagesListService()
+    private var isChangingLike = false
     
     // MARK: - UI
         private let scrollZoom: UIScrollView = {
@@ -38,6 +44,15 @@ final class SingleImageViewController: UIViewController {
             return btn
         }()
 
+        private let likeButton: UIButton = {
+            let btn = UIButton(type: .system)
+            btn.setImage(UIImage(resource: .noActive).withRenderingMode(.alwaysOriginal), for: .normal)
+            btn.setImage(UIImage(resource: .active).withRenderingMode(.alwaysOriginal), for: .selected)
+            btn.tintColor = .clear
+            btn.translatesAutoresizingMaskIntoConstraints = false
+            return btn
+        }()
+
         private let shareButton: UIButton = {
             let btn = UIButton(type: .system)
             btn.setImage(UIImage(resource: .sharing), for: .normal)
@@ -61,12 +76,16 @@ final class SingleImageViewController: UIViewController {
         view.addSubview(scrollZoom)
         scrollZoom.addSubview(imageView)
         view.addSubview(exitSinglImage)
+        view.addSubview(likeButton)
         view.addSubview(shareButton)
         
         scrollZoom.delegate = self
         
         exitSinglImage.addTarget(self, action: #selector(didTapBackButton), for: .touchUpInside)
+        likeButton.addTarget(self, action: #selector(didTapLikeButton), for: .touchUpInside)
         shareButton.addTarget(self, action: #selector(didTapShareButton), for: .touchUpInside)
+        
+        updateLikeButton()
     }
     
     private func setupConstraints() {
@@ -90,6 +109,12 @@ final class SingleImageViewController: UIViewController {
             exitSinglImage.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
             exitSinglImage.widthAnchor.constraint(equalToConstant: 44),
             exitSinglImage.heightAnchor.constraint(equalToConstant: 44),
+        
+        // Like Button
+            likeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            likeButton.centerYAnchor.constraint(equalTo: shareButton.centerYAnchor),
+            likeButton.widthAnchor.constraint(equalToConstant: 44),
+            likeButton.heightAnchor.constraint(equalToConstant: 44),
             
         // Share Button
             shareButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -136,10 +161,46 @@ final class SingleImageViewController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
     
+    @objc private func didTapLikeButton() {
+        guard let photoId else { return }
+        guard !isChangingLike else { return }
+        isChangingLike = true
+        UIBlockingProgressHUD.show()
+        imagesListService.changeLike(photoId: photoId, isLike: !isLiked) { [weak self] result in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                self.isChangingLike = false
+                UIBlockingProgressHUD.dismiss()
+                switch result {
+                case .success:
+                    self.isLiked.toggle()
+                    self.updateLikeButton()
+                case .failure(let error):
+                    self.showLikeError(error: error)
+                }
+            }
+        }
+    }
+    
     @objc private func didTapShareButton() {
         guard let image=imageView.image else { return }
         let share = UIActivityViewController(activityItems: [image], applicationActivities: nil)
         present(share, animated: true)
+    }
+    
+    private func updateLikeButton() {
+        likeButton.isSelected = isLiked
+        likeButton.accessibilityIdentifier = isLiked ? "like button on" : "NoActive"
+    }
+    
+    private func showLikeError(error: Error) {
+        let alert = UIAlertController(
+            title: "Не удалось изменить лайк",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Ок", style: .default))
+        present(alert, animated: true)
     }
 }
 

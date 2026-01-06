@@ -307,6 +307,8 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
         guard let url = URL(string: photo.largeImageURL) else { return }
         let single = SingleImageViewController()
         single.fullImageURL = url
+        single.photoId = photo.id
+        single.isLiked = photo.isLiked
         single.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(single, animated: true)
     }

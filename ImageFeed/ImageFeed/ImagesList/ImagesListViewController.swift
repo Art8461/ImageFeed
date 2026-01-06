@@ -153,6 +153,8 @@ extension ImagesListViewController: UITableViewDelegate {
 
         let singleImageVC = SingleImageViewController()
         singleImageVC.fullImageURL = fullImageURL
+        singleImageVC.photoId = photo.id
+        singleImageVC.isLiked = photo.isLiked
         singleImageVC.hidesBottomBarWhenPushed = true
         
         navigationController?.pushViewController(singleImageVC, animated: true)
